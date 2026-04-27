@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 > Project: OpenClaw FIE - 飞书企业级长程协作 Memory 系统
-> Version: 1.1
+> Version: 1.2
 > Last Updated: 2026-04-27
 > Audience: Claude Code, Cursor, any AI coding agent in this repository
 
@@ -133,6 +133,26 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 如果发现 Schema/接口/宪法有错误：
 - ✅ 在 PR 中明文指出
 - ❌ 不要默默改它
+
+### 2.8 工作记录持续化（PROGRESS.md）
+
+每次会话结束 / 每个 PR 合并前，必须在仓库根目录的 `PROGRESS.md` 中追加一段工作记录。
+
+**记录格式**：
+- 顶部按日期倒序（最新在最上）
+- 每天一个 `## YYYY-MM-DD · Day N · <主题>` 标题（Day N 从 2026-04-22 赛事开赛起算）
+- 每个会话或 PR 作为子条目，包含：
+  - **改动**：文件 + 一句话简述
+  - **决策**：本次锁定的设计决定（如 D1=a / 范围级修订）
+  - **遗留**：开放点、待确认假设、未跑测试
+  - **LLM 调用次数**：含调试估算（宪法 §4.4 预算追踪）
+
+**禁止**：
+- 工作记录散落在 commit message / PR 描述而 `PROGRESS.md` 不更新
+- 写"做了一些工作"之类的虚词
+- 修改历史日期记录（订正错字除外）
+
+**理由**：宪法 §10 当前角色为单人 + Claude，无 standup、无团队 wiki；`PROGRESS.md` 是赛后扩团队接手时唯一的过程证据，也是答辩复盘"我们怎么从零做出 v1.0"的素材源。
 
 ---
 

@@ -378,7 +378,7 @@ CHECK (
 
 **v2 切换条件**（宪法 §3.3）：单 collection > 1M 向量 OR 近邻 P95 > 200ms 时切 Qdrant；届时本表保留为 PG 侧备份。
 
-> **维度选择**：1024 假设 Doubao Embedding v1。若实际选用模型维度不同（如 OpenAI text-embedding-3-small=1536），需新建迁移 `0003_change_embedding_dim.py` 并清空已有 embedding 重新生成。**这是一个待你确认的假设。**
+> **维度选择**：1024 = Doubao Embedding v1（已确认 2026-04-27）。改维度需新建迁移并清空已有 embedding 重新生成。
 
 ---
 
