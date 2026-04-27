@@ -384,7 +384,7 @@
 - **三大主测试 fixture**：未建
 - **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
 - **代码骨架**：尚未建立（无 `memory_engine/`、`feishu_integration/`、`tests/`、`schema.sql`、`models.py`）
-- **下游文档**：02-DESIGN 已迁入 `docs/`；03-SCHEMA 已建（v1.0）；04、05、06 待建
+- **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE 已建（v1.0+）；05、06 待建
 - **最近修订**：2026-04-27 v1.1（D1/D4 决策引发的范围级修订：向量层与图层 v1 降至 PG 单库为底座）
 
 ---

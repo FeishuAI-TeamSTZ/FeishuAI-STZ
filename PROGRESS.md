@@ -37,7 +37,27 @@
 - 代码骨架：`memory_engine/` / `feishu_integration/` / `tests/` / `schema.sql` / `models.py` 全部尚未存在
 - `validate_consistency.py` 尚未实现（03-SCHEMA 附录 A 已给出规约）
 
-### LLM 调用
-本日累计 0 次生产 LLM 调用（全部为文档创作 + 仓库探索）。
+### 后续 — 04-ENGUIDE 创建（同日下午）
+
+**改动**：
+- 新建 [docs/04-ENGUIDE.md](./docs/04-ENGUIDE.md) v1.0（~720 行；§8 接口契约总表覆盖 M1–M7 + 共享工具 + CLI 共 ~25 个函数签名）
+- [docs/01-CONSTITUTION.md](./docs/01-CONSTITUTION.md) §11 状态行更新（下游文档列表加入 04-ENGUIDE）
+
+**决策**：
+- 代码风格：v1 全同步（FastAPI / SQLAlchemy 2.0 / httpx 同步）；async 留 v2
+- 数据三层：API DTO ↔ pydantic v2 业务对象 ↔ SQLAlchemy ORM；ORM 不出 `memory_engine` 包
+- 模块依赖红线：M1–M7 不直接相互调用，必须经 `cold_path` 编排；`utils/` 不调任何 M1–M7 业务模块
+- v1 同步函数调用；事件总线（Redis Streams / PG LISTEN）推迟到 v2
+- LLM 网关与飞书网关为强制层；W13 由 `feishu_client` + DB NOT NULL 双层保证
+- 单测必须 mock LLM / 飞书 API；唯一例外是 `@pytest.mark.live` 端到端基准测试
+
+**遗留**：
+- 05-edge-discipline / 06-benchmark-design 待建
+- 代码骨架仍未建立（pyproject.toml / requirements.txt / memory_engine/ 全空）；**接口契约已就位 → 首个代码 ticket 可开工**
+
+**LLM 调用**：本轮 0 次
+
+### 当日 LLM 调用累计
+0 次生产调用（全部为文档创作 + 仓库探索）。
 
 ---
