@@ -1,12 +1,9 @@
 """Baseline RAG 主入口"""
-import os
 from typing import Optional
-
-import httpx
 
 from .chunker import Chunker
 from .config import config
-from .embedding import embedding_model
+from .embedding import EmbeddingModel, embedding_model
 from .retriever import Retriever
 from .in_memory_store import InMemoryVectorStore
 
@@ -27,6 +24,7 @@ class BaselineRAG:
         self,
         use_memory: bool = True,
         chunker: Optional[Chunker] = None,
+        embedding: Optional[EmbeddingModel] = None,
     ):
         if use_memory:
             self.vector_store = InMemoryVectorStore()
@@ -35,13 +33,16 @@ class BaselineRAG:
             self.vector_store = VectorStore()
         
         self.chunker = chunker or Chunker()
-        self.retriever = Retriever(self.vector_store)
-        self.embedding = embedding_model
-        self._client = httpx.Client(
-            base_url="https://api.openai.com/v1",
-            headers={"Authorization": f"Bearer {config.OPENAI_API_KEY}"},
-            timeout=30.0,
-        )
+        self.embedding = embedding or embedding_model
+        self.retriever = Retriever(self.vector_store, self.embedding)
+        self._client = None
+        if config.OPENAI_API_KEY:
+            import httpx
+            self._client = httpx.Client(
+                base_url="https://api.openai.com/v1",
+                headers={"Authorization": f"Bearer {config.OPENAI_API_KEY}"},
+                timeout=30.0,
+            )
 
     def add_text(self, text: str, source_type: str = "text", source_id: Optional[str] = None, metadata: Optional[dict] = None) -> int:
         """添加文本到知识库，返回添加的块数量"""
@@ -50,14 +51,14 @@ class BaselineRAG:
             self.retriever.add_chunks(chunks)
         return len(chunks)
 
-    def add_messages(self, messages: list[dict]) -> int:
+    def add_messages(self, messages: list) -> int:
         """批量添加飞书消息"""
         chunks = self.chunker.chunk_messages(messages)
         if chunks:
             self.retriever.add_chunks(chunks)
         return len(chunks)
 
-    def add_decisions(self, decisions: list[dict]) -> int:
+    def add_decisions(self, decisions: list) -> int:
         """批量添加决策"""
         chunks = self.chunker.chunk_decisions(decisions)
         if chunks:
@@ -74,6 +75,14 @@ class BaselineRAG:
                 "answer": "抱歉，知识库中没有找到相关信息。",
                 "sources": [],
                 "context_used": False,
+            }
+
+        if not self._client:
+            return {
+                "question": question,
+                "answer": "请配置OPENAI_API_KEY以获取LLM回答",
+                "sources": self.retriever.search(question, top_k),
+                "context_used": True,
             }
 
         messages = [
@@ -125,7 +134,8 @@ class BaselineRAG:
 
     def close(self) -> None:
         """关闭客户端"""
-        self._client.close()
+        if self._client:
+            self._client.close()
 
     def __enter__(self) -> "BaselineRAG":
         return self

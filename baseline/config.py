@@ -1,20 +1,18 @@
 """Baseline RAG 配置"""
 import os
-from dataclasses import dataclass
-from typing import Literal
 
 
-@dataclass(frozen=True)
 class Config:
-    """Baseline RAG 配置（固定不变）"""
+    """Baseline RAG 配置"""
 
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
 
     TOP_K: int = 5
 
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_DIM: int = 1536
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIM: int = 384
+    EMBEDDING_CACHE_DIR: str = "./baseline/models"
 
     LLM_MODEL: str = "gpt-4o-mini"
     LLM_TEMPERATURE: float = 0.0

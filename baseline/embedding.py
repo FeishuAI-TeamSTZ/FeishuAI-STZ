@@ -1,49 +1,50 @@
-"""Baseline RAG Embedding模块 - OpenAI text-embedding-3-small"""
-from typing import Optional
+"""Baseline RAG Embedding模块 - sentence-transformers本地模型"""
+from typing import Optional, List, Union
 
-import httpx
+from sentence_transformers import SentenceTransformer
 
 from .config import config
 
 
 class EmbeddingModel:
-    """OpenAI Embedding 模型封装"""
+    """sentence-transformers 本地Embedding模型"""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "text-embedding-3-small"):
-        self.api_key = api_key or config.OPENAI_API_KEY
-        self.model = model
-        self.dimension = 1536
-        self._client = httpx.Client(
-            base_url="https://api.openai.com/v1",
-            headers={"Authorization": f"Bearer {self.api_key}"},
-            timeout=10.0,
+    DEFAULT_MODEL = "all-MiniLM-L6-v2"
+
+    def __init__(
+        self,
+        model_name: Optional[str] = None,
+        cache_dir: Optional[str] = "./baseline/models",
+        device: Optional[str] = None,
+    ):
+        self.model_name = model_name or self.DEFAULT_MODEL
+        self.cache_dir = cache_dir
+        self.model = SentenceTransformer(
+            self.model_name,
+            cache_folder=cache_dir,
+            device=device,
         )
+        self.dimension = self.model.get_sentence_embedding_dimension()
 
-    def encode(self, texts: str | list[str]) -> list[list[float]]:
+    def encode(self, texts: Union[str, List[str]]) -> List[List[float]]:
         """将文本转换为向量"""
         if isinstance(texts, str):
             texts = [texts]
 
-        response = self._client.post(
-            "/embeddings",
-            json={
-                "input": texts,
-                "model": self.model,
-                "dimensions": self.dimension,
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
+        embeddings = self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False)
+        return embeddings.tolist()
 
-        return [item["embedding"] for item in data["data"]]
-
-    def encode_single(self, text: str) -> list[float]:
+    def encode_single(self, text: str) -> List[float]:
         """将单个文本转换为向量"""
         return self.encode(texts=[text])[0]
 
+    def get_dimension(self) -> int:
+        """获取向量维度"""
+        return self.dimension
+
     def close(self) -> None:
-        """关闭HTTP客户端"""
-        self._client.close()
+        """清理模型（sentence-transformers不需要显式close）"""
+        pass
 
 
 embedding_model = EmbeddingModel()

@@ -22,7 +22,7 @@ class TextChunk:
 class InMemoryVectorStore:
     """纯内存向量存储（无需PostgreSQL）"""
 
-    def __init__(self, embedding_dim: int = 1536):
+    def __init__(self, embedding_dim: int = 384):
         self.embedding_dim = embedding_dim
         self.chunks: list[TextChunk] = []
 

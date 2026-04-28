@@ -70,3 +70,5 @@ tmp/
 # ─── 项目可生成产物（保留 schema.sql 本身，忽略导出） ──
 *.sqlc.go
 db_dump_*.sql
+baseline/models/
+.venv/

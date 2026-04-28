@@ -1,24 +1,26 @@
 """Baseline RAG 检索模块"""
-from typing import Optional
+from typing import Optional, List
 
 from .chunker import Chunk
-from .embedding import embedding_model
-from .vector_store import VectorStore
 
 
 class Retriever:
     """向量检索器"""
 
-    def __init__(self, vector_store: Optional[VectorStore] = None):
-        self.vector_store = vector_store or VectorStore()
-        self.embedding = embedding_model
+    def __init__(
+        self,
+        vector_store,
+        embedding,
+    ):
+        self.vector_store = vector_store
+        self.embedding = embedding
 
     def add_chunk(self, chunk: Chunk) -> None:
         """添加单个块"""
         embedding = self.embedding.encode_single(chunk.content)
         self.vector_store.insert(chunk, embedding)
 
-    def add_chunks(self, chunks: list[Chunk]) -> None:
+    def add_chunks(self, chunks: List[Chunk]) -> None:
         """批量添加块"""
         if not chunks:
             return
@@ -26,7 +28,7 @@ class Retriever:
         embeddings = self.embedding.encode(contents)
         self.vector_store.batch_insert(chunks, embeddings)
 
-    def search(self, query: str, top_k: int = 5, source_filter: Optional[str] = None) -> list[dict]:
+    def search(self, query: str, top_k: int = 5, source_filter: Optional[str] = None) -> List[dict]:
         """检索相关内容"""
         query_embedding = self.embedding.encode_single(query)
         results = self.vector_store.search(query_embedding, top_k, source_filter)
