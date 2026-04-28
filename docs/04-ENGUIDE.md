@@ -229,18 +229,26 @@ def compute_embedding(text: str) -> Vector: ...  # 返回 list[float] 长度 102
 - **重试**：HTTP 5xx 指数退避 3 次；4xx 直接抛
 - **超时**：light = 5s；heavy = 15s；embedding = 3s
 
-### 4.4 LLM 调用预算（宪法 §4.4 镜像）
+### 4.4 LLM 调用预算（宪法 §4.1 镜像）
 
-| Category | 单次成本 | 日预算 | 优先级 |
-|:---|:---:|:---:|:---:|
-| `EXTRACT_LIGHT` | ~500 tokens | 3K | P0 |
-| `EVOLVE_HEAVY` | ~800 tokens | 3K | P0 |
-| `REFLECT_BORDER` | ~1K tokens | 1.5K | P1 |
-| `CROSS_ALIGN` | ~1.2K tokens | 1.5K | P1 |
-| `DECAY_OFFLINE` | ~2K tokens | <0.5K | P2 |
-| `BUFFER` | — | ~0.5K | — |
+**约束底层 = TPM 1w 单人 / 3w 小组**（火山引擎 Doubao）。下表的"日 calls 预算"由 TPM 派生，仅作每日规划参考；实际 rate-limit 由网关在 per-minute 维度上强制。
 
-P0 类预算耗尽 → 整套系统降级；P1/P2 耗尽仅本类降级。
+| Category | 模型 | 单次 token | 日 calls 预算 | 优先级 |
+|:---|:---|:---:|:---:|:---:|
+| `EXTRACT_LIGHT` | Doubao 1.6 | ~500 | 3K | P0 |
+| `EVOLVE_HEAVY` | Doubao 2.0 | ~800 | 3K | P0 |
+| `REFLECT_BORDER` | Doubao 2.0 | ~1K | 1.5K | P1 |
+| `CROSS_ALIGN` | Doubao 2.0 | ~1.2K | 1.5K | P1 |
+| `DECAY_OFFLINE` | Doubao 1.6 | ~2K | <0.5K | P2 |
+| `EMBEDDING` | Doubao Embedding v1 | ~30 (1024 维) | 独立 EP，不挤占以上 | P0 |
+| `BUFFER` | — | — | ~0.5K | — |
+
+P0 类预算耗尽 → 整套系统降级（W12 切本地 7B）；P1/P2 耗尽仅本类降级。
+
+**网关强制行为**：
+- per-minute token 计数器：连续 60s 累计 ≥ 9000 tokens 时主动降速（避开 10000 hard limit）
+- 单 category 日预算耗尽 → raise `LLMQuotaExceededError`
+- 接入小组 3w TPM 通道时，网关需读取 `LLM_TPM_TIER` 环境变量切换上限
 
 ### 4.5 测试 mock 规约
 

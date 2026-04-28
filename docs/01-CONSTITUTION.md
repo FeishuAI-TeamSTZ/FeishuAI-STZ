@@ -1,7 +1,7 @@
 # 飞书决策一致性引擎 · 项目宪法
 
 > **文档编号**：01-CONSTITUTION
-> **版本**：v1.1
+> **版本**：v1.2
 > **生效日期**：2026-04-27
 > **上级权威**：仅次于飞书 AI 校园挑战赛官方规则；本项目内部最高文档
 > **对齐架构版本**：DESIGN.md v3.3-focused
@@ -129,7 +129,7 @@
 | 方向 C 的核心能力（隐式学习用户偏好、自动化执行） | 与方向 B 主题不一致 |
 | 方向 D 的"复习提醒"产品形态 | 已由五维遗忘语义层覆盖，不再做 UI 层提醒 |
 | Reflect 的"质量档案 → 自动 Prompt 优化"完整闭环 | 离线再训练超出 17 天预算，保留单次 Reflect |
-| 任何依赖梯度训练 / 微调的方案 | Seed-2.0 不开放微调；TPM 1w 不支持训练 |
+| 任何依赖梯度训练 / 微调的方案 | Doubao 商业 API 不开放微调；TPM 1w 也不支持训练 |
 | 引入 `requirements.txt` 之外的新依赖 | 见 §5.6 |
 | 任何"顺手优化"非 ticket 范围内的代码 | 见 CLAUDE.md §1.2 外科手术原则 |
 
@@ -138,11 +138,12 @@
 | 条件项 | v1.0 默认 | 触发条件 |
 |:---|:---|:---|
 | OKR / 审批 / 妙记 / 日历 四个非主源 API 真实接入 | 用 fixture 模拟 | 主链路（消息+文档+CLI）在 Day 12 前跑通后按余量接入 |
-| 本地降级模型（7B 量化版） | 不接入 | Seed-2.0 额度连续 3 日抖动后启用 |
+| 本地降级模型（7B 量化版） | 不接入 | Doubao 单人 TPM 连续 3 日吃满 OR 演示前夜手动激活 |
 | 多用户 / 多租户支持 | 单租户演示 | 仅在赛后扩展 |
 | 离线五维参数自动校准（每两周） | 手工配置 | 仅在 v2.x 演进项中考虑 |
 | 向量层切换至独立 Qdrant 服务 | pgvector（PG 扩展） | 单 collection > 1M 向量 OR 近邻 P95 > 200ms |
 | 图层切换至 Neo4j / Kuzu | PG 自引用 + recursive CTE | 多跳 ≥ 4 跳频繁出现 OR 多跳 P95 > 500ms |
+| 任务调度切换至 Celery + Redis | APScheduler（同进程内存调度） | 单进程任务积压 > 1000 条 OR Beat 漂移 > 30s OR 多机部署 |
 
 ### 3.4 范围歧义处置
 
@@ -156,9 +157,17 @@
 
 | 资源 | 配额 | 来源 |
 |:---|:---|:---|
-| Seed-2.0 / Doubao 1.6 | 单人 TPM 1w（赛事认领） | 火山方舟 |
-| 飞书 API | 不限速率（赛事开放） | 飞书开放平台 |
-| 飞书妙搭 / OpenClaw | 商业版租户内免费 | 赛事提供 |
+| Doubao 2.0（heavy 路径默认：演化判定 / Reflect / 跨源对齐） | 单人 TPM 1w / 小组 TPM 3w | 火山引擎（EP + 模型 ID + API Key） |
+| Doubao 1.6（light 路径默认：决策原子提取 / 离线参数校准） | 单人 TPM 1w / 小组 TPM 3w | 火山引擎（EP + 模型 ID + API Key） |
+| Doubao Embedding v1（向量，1024 维） | 与上述独立的 Embedding EP | 火山引擎 |
+| 本地 7B 量化降级（W12） | 不计赛事额度 | v1 不接入；触发条件见 §3.3 |
+| 飞书 API（消息 / 文档 / OKR / 审批 / 妙记 / 日历） | **不限速率**（赛事开放） | 飞书开放平台 |
+| 飞书妙搭（AI Coding） | 商业版租户内免费 | 赛事提供 |
+| 飞书 OpenClaw（一键部署） | 商业版租户内免费 | 赛事提供 |
+
+> **TPM = Tokens Per Minute**。1w = 10 000 tokens / 分钟 sustained。
+> 派生日上限：1w TPM × 60 × 24 ≈ 14.4M tokens / day（理论），实际按 §4.4 表分配。
+> 当前角色为单人（§10.2），按 1w TPM 规划；接入小组扩到 3w TPM 须在 §11 状态记录。
 
 ### 4.2 时间约束
 
@@ -385,7 +394,7 @@
 - **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
 - **代码骨架**：尚未建立（无 `memory_engine/`、`feishu_integration/`、`tests/`、`schema.sql`、`models.py`）
 - **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE 已建（v1.0+）；05、06 待建
-- **最近修订**：2026-04-27 v1.1（D1/D4 决策引发的范围级修订：向量层与图层 v1 降至 PG 单库为底座）
+- **最近修订**：2026-04-27 v1.2（D6 决策引发：v1 任务调度 = APScheduler；同步刷新 §4.1 LLM 资源为 Doubao 2.0 / 1.6 + Embedding v1，TPM 1w 单人 / 3w 小组）
 
 ---
 
@@ -410,3 +419,4 @@
 |:---|:---|:---|
 | v1.0 | 2026-04-27 | 初稿。对齐 DESIGN.md v3.3-focused；锁定 17 天交付窗口；三大测试目标定为宪法级承诺；记录单人 + Claude 当前模式与三人预留结构 |
 | v1.1 | 2026-04-27 | 范围级修订（D1/D4 决策触发）：§3.1.4 / §3.3 同步降级 v1 向量层为 pgvector（v2 切 Qdrant）、v1 图层为 decisions 自引用 + recursive CTE（v2 切 Neo4j/Kuzu）；详见 03-SCHEMA.md |
+| v1.2 | 2026-04-27 | 范围级修订（D6 决策触发）：§3.3 加任务调度切换条件（v1 = APScheduler / v2 = Celery + Redis）；§4.1 LLM 资源更新为 Doubao 2.0（heavy）+ Doubao 1.6（light）+ Doubao Embedding v1，TPM 1w 单人 / 3w 小组；§3.2 微调禁止理由改为 Doubao 商业 API 不开放微调 |

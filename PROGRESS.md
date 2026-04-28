@@ -57,7 +57,30 @@
 
 **LLM 调用**：本轮 0 次
 
+### 后续 — 资源配置刷新 + Phase 0 计划锁定（同日傍晚）
+
+**改动**：
+- [docs/01-CONSTITUTION.md](./docs/01-CONSTITUTION.md) v1.1 → v1.2：§3.2 微调禁令理由更新；§3.3 加任务调度切换 Conditional Scope 行；§4.1 资源表全面刷新（Doubao 2.0/1.6 + Embedding v1，TPM 1w 单人 / 3w 小组）；§11 状态行；附录 B v1.2 行
+- [docs/02-DESIGN.md](./docs/02-DESIGN.md)：replace_all `Seed-2.0` → `Doubao`（17 处）；header 加 LLM 命名口径段；§二 LLM 配额段 TPM-aware；§四 机制三 budget header TPM-aware；§十一 LLM 服务行 + 任务调度行（APScheduler v1 / Celery v2）
+- [docs/04-ENGUIDE.md](./docs/04-ENGUIDE.md) §4.4：LLM 调用预算表加"模型"列（Heavy=2.0 / Light=1.6 / Embedding 独立）；加 TPM 网关强制行为说明
+
+**决策**：
+- **D6 = (b)**：v1 任务调度 = APScheduler（同进程内存）；v2 切 Celery + Redis 触发条件已写入宪法 §3.3
+- **D7 = (b)**：Python 3.12 锁定（T-001 pyproject.toml 直接定）
+- **D8 = (a)**：T-001 提供 `docker-compose.yml`（PG 16 + pgvector）
+- **D9 = (a)**：Phase 0 完成后，第一个业务 ticket = M1 + M2 + M5 端到端切片
+- **隐含 D10**：Heavy 路径默认 Doubao 2.0，Light 路径默认 Doubao 1.6（推论自"用大模型保精度，小模型保 volume"），如不同意需 ticket 阶段调整
+- **资源命名口径**："Seed-2.0" 全部改为 "Doubao"；具体分工以 04-ENGUIDE §4.4 为准
+- **TPM 替代 calls/day**：约束底层是 TPM 1w 单人 / 3w 小组，calls/day 仅为派生参考
+
+**遗留**：
+- T-001 ~ T-005 计划已就位，**等用户 WSL 环境探索后启动**
+- 05-edge-discipline / 06-benchmark-design 仍待建（不阻塞代码骨架）
+- 火山引擎 EP 实际数值（DOUBAO_2_ENDPOINT_ID / DOUBAO_1_6_ENDPOINT_ID / DOUBAO_EMBED_ENDPOINT_ID）尚未认领，T-001 时填 .env.example 占位
+
+**LLM 调用**：本轮 0 次
+
 ### 当日 LLM 调用累计
-0 次生产调用（全部为文档创作 + 仓库探索）。
+0 次生产调用（全部为文档创作 + 资源配置刷新）。
 
 ---
