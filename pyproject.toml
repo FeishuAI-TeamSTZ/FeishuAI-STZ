@@ -107,7 +107,12 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = true
 warn_unreachable = true
-exclude = ["migrations/versions/", "tests/fixtures/"]
+exclude = [
+    "migrations/versions/",
+    "tests/fixtures/",
+    "benchmark/fixtures/",          # NPU-src 数据文件，不强制类型严格
+    "benchmark/validate_fixtures.py",  # sanity-check 脚本，T-005 时再加注解
+]
 
 [[tool.mypy.overrides]]
 module = ["pgvector.*", "cachetools.*", "apscheduler.*", "testcontainers.*"]
