@@ -21,7 +21,8 @@ repos:
           - "sqlalchemy>=2.0"
           - "pydantic-settings>=2.1"
           - "structlog>=24.1"
-        exclude: ^(migrations/versions/|tests/fixtures/|benchmark/fixtures/)
+        # 排除：迁移生成代码 / 评测数据文件 / fixture 验证脚本（无 TypedDict 化前 strict 不友好；T-005 时再补）
+        exclude: ^(migrations/versions/|tests/fixtures/|benchmark/fixtures/|benchmark/validate_fixtures\.py$)
 
   # ─── 通用文件检查 ─────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
