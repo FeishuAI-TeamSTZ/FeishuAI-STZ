@@ -1,7 +1,29 @@
 #!/usr/bin/env python3
-"""快速验证测试数据是否正确加载"""
-from fixtures.tc001_anti_interference import CORE_DECISION, NOISE_MESSAGES, QUERIES as TC001_QUERIES, TEST_CONFIG as TC001_CONFIG
-from fixtures.tc002_contradiction import DECISION_SEQUENCE, BOUNDARY_CASES, TEST_CONFIG as TC002_CONFIG
+"""快速验证 benchmark/fixtures 中的测试数据是否正确加载。
+
+用法（在仓库根目录）：
+    python -m benchmark.validate_fixtures
+    # 或
+    python benchmark/validate_fixtures.py
+"""
+import sys
+from pathlib import Path
+
+# 允许直接 `python benchmark/validate_fixtures.py` 运行（脚本模式）
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from benchmark.fixtures.tc001_anti_interference import (  # noqa: E402
+    CORE_DECISION,
+    NOISE_MESSAGES,
+    QUERIES as TC001_QUERIES,
+    TEST_CONFIG as TC001_CONFIG,
+)
+from benchmark.fixtures.tc002_contradiction import (  # noqa: E402
+    DECISION_SEQUENCE,
+    BOUNDARY_CASES,
+    TEST_CONFIG as TC002_CONFIG,
+)
 
 print('=' * 60)
 print('TC001 抗干扰召回测试数据概览')

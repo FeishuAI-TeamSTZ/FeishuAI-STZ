@@ -1,8 +1,8 @@
 # CLAUDE.md
 
 > Project: OpenClaw FIE - 飞书企业级长程协作 Memory 系统
-> Version: 1.2
-> Last Updated: 2026-04-27
+> Version: 1.3
+> Last Updated: 2026-04-29
 > Audience: Claude Code, Cursor, any AI coding agent in this repository
 
 ---
@@ -158,20 +158,25 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 ## 3. 协作纪律（Multi-Agent Coordination）
 
-### 3.1 角色分工（预留三人结构，当前单人 + Claude）
+### 3.1 角色分工（双贡献者 + Claude 副驾，自 v1.3 起）
 
-本项目设计为三角色协作（便于扩团队接手），当前阶段为 **单一贡献者 + Claude 副驾**：
+本项目设计为三角色协作，当前为 **双贡献者 + Claude 副驾**（详见 [宪法 §10.2](./docs/01-CONSTITUTION.md)）：
 
-- **R1 内核工程师**：负责 `memory_engine/` 下的核心算法
-- **R2 接入工程师**：负责 `feishu_integration/` 和 `cli/`
-- **R3 评测+产品工程师**：负责 `benchmark/` 和文档
+- **R1 内核工程师**：负责 `memory_engine/` 下的核心算法（暂未动工）
+- **R2 接入工程师**：负责 `feishu_integration/` 和 `cli/`（暂未动工）
+- **R3 评测+产品工程师**：拆为两个子领地
+  - **czhang076 子领地**：宪法 / 架构 / Schema / 工程指南 / Ticket（`docs/`、`tickets/`）
+  - **NPU-src 子领地**：评测数据 fixture（`benchmark/fixtures/`）
 
-**当前规则（单人 + Claude 模式）**：
-- 一次会话 / PR 只覆盖一个角色对应的目录，避免跨域脏改
-- Claude 跨目录改动必须在响应中显式列出"本次改了哪些原属 Rx 目录的文件，理由是什么"
+**多人协作纪律**：
+- **每次 push 前先 `git pull origin main`** —— 基于过期 branch 工作是合并冲突与文档复活的主要根因（参考 NPU-src 在 418431f 误复活 ARCHITECTURE.md / METRICS.md 的教训）
+- **删文件前先 grep 引用 + 跟另一贡献者确认** —— 不要默认"我看不见的就是不存在的"
+- **目录归属以 [04-ENGUIDE §1](./docs/04-ENGUIDE.md) 为准**：docs/ / benchmark/fixtures/ / tests/ / scripts/ 各有领地
+- **新增不在 04-ENGUIDE §1 路径里的文件** → PR 描述说明，必要时同步更 04-ENGUIDE §1
+- 一次会话 / PR 尽量只覆盖一个子领地；Claude 跨子领地改动必须在响应中显式列出"改了哪些原属哪个领地的文件 + 理由"
 - 任何文件首次创建时，在 PR 描述中说明（替代原"团队群通知"）
 
-**扩团队时**：直接按三角色分工接管对应目录，无须重构。
+**扩团队时**：R1 / R2 角色直接分配新成员，子领地划分模板见 §10.2。
 
 ### 3.2 ticket 完成定义（DoD）
 

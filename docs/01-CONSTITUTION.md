@@ -1,8 +1,8 @@
 # 飞书决策一致性引擎 · 项目宪法
 
 > **文档编号**：01-CONSTITUTION
-> **版本**：v1.2
-> **生效日期**：2026-04-27
+> **版本**：v1.3
+> **生效日期**：2026-04-27（v1.3 修订日：2026-04-29）
 > **上级权威**：仅次于飞书 AI 校园挑战赛官方规则；本项目内部最高文档
 > **对齐架构版本**：DESIGN.md v3.3-focused
 
@@ -367,19 +367,24 @@
 
 ### 10.2 角色与 active 贡献者
 
-设计为三角色协作（R1 内核 / R2 接入 / R3 评测+产品），**当前阶段为单一贡献者 + Claude 副驾**：
+设计为三角色协作（R1 内核 / R2 接入 / R3 评测+产品），**当前阶段为双人贡献者 + Claude 副驾**（自 2026-04-29 v1.3 起）：
 
-| 角色 | 当前实际承担者 |
+| 角色 / 子领地 | 当前实际承担者 |
 |:---|:---|
-| 项目负责人 / 全部三角色 | czhang076（zcz20021113@gmail.com） |
-| AI 副驾（编码 / 文档 / 评测协助） | Claude Code |
+| R3 文档体系（docs/）/ 架构 / Schema / 工程指南 / 项目宪法 | **czhang076**（zcz20021113@gmail.com / czhang076@e.ntu.edu.sg） |
+| R3 评测数据（benchmark/fixtures/）/ AB 测试用例设计 | **NPU-src**（1393424688@qq.com） |
+| R1 内核（memory_engine/）/ R2 接入（feishu_integration/、cli/） | 待动工，暂由 czhang076 + Claude 主导设计；扩团队时分配 |
+| AI 副驾（编码 / 文档 / 评测协助 / 矛盾识别） | Claude Code |
 
-扩团队时，按三角色分工接管对应目录，无须重构。
+扩团队时按三角色完整分工接管，无须重构目录。
 
-### 10.3 单人 + Claude 模式的纪律
+### 10.3 多人协作纪律（v1.3 新增）
 
-- 一次会话 / PR 只覆盖一个角色对应的目录
-- Claude 跨目录改动必须显式列出"本次改了哪些原属 Rx 目录的文件，理由是什么"
+- **每次 push 前先 `git pull origin main`** —— 基于过期 branch 工作是合并冲突与文档复活的主要根因
+- **目录归属以 [04-ENGUIDE §1](./04-ENGUIDE.md#1-仓库目录布局) 为准**：`docs/` / `benchmark/fixtures/` / `tests/` / `scripts/` / `migrations/` 各有领地，不交叉
+- **删文件前先 grep 引用 + 跟另一贡献者确认** —— 上次 ARCHITECTURE.md / METRICS.md 因没确认就删 → NPU-src 误以为缺失又复活，浪费一轮 commit
+- **新增不在 04-ENGUIDE §1 路径里的目录或文件** → PR 描述说明，必要时同步更新 04-ENGUIDE §1
+- 一次会话 / PR 尽量只覆盖一个角色对应的子领地；跨子领地改动必须显式列出
 - 任何文件首次创建在 PR 描述中说明（替代"团队群通知"）
 
 ---
@@ -388,13 +393,14 @@
 
 > 本节是宪法中 **唯一允许频繁更新** 的部分（一日内最多 1 次，会话末尾 commit）。
 
-- **当前阶段**：Phase 2 / Day 6（文档体系初建）
-- **七大机制实现进度**：M1–M7 = 未启动
-- **三大主测试 fixture**：未建
+- **当前阶段**：Phase 2 / Day 8（文档体系完工 + NPU-src 整合 + T-001 ticket 待实施）
+- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）
+- **三大主测试 fixture**：TC001 / TC002 v0 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
 - **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-- **代码骨架**：尚未建立（无 `memory_engine/`、`feishu_integration/`、`tests/`、`schema.sql`、`models.py`）
-- **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE 已建（v1.0+）；05、06 待建
-- **最近修订**：2026-04-27 v1.2（D6 决策引发：v1 任务调度 = APScheduler；同步刷新 §4.1 LLM 资源为 Doubao 2.0 / 1.6 + Embedding v1，TPM 1w 单人 / 3w 小组）
+- **代码骨架**：尚未建立（无 `memory_engine/`、`feishu_integration/`、`tests/`、`schema.sql`、`models.py`）；首个代码 ticket = T-001（pyproject + 包结构 + Docker）
+- **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE / 06-benchmark-design 已建（v1.0+）；05 待建
+- **active 贡献者**：czhang076（架构 + 文档 + 工程）+ NPU-src（评测数据） + Claude Code 副驾
+- **最近修订**：2026-04-29 v1.3（NPU-src 在 418431f 推送 AB 测试框架后整合：§10.2 加 NPU-src 为 active 贡献者，§10.3 改写为多人协作纪律）
 
 ---
 
@@ -420,3 +426,4 @@
 | v1.0 | 2026-04-27 | 初稿。对齐 DESIGN.md v3.3-focused；锁定 17 天交付窗口；三大测试目标定为宪法级承诺；记录单人 + Claude 当前模式与三人预留结构 |
 | v1.1 | 2026-04-27 | 范围级修订（D1/D4 决策触发）：§3.1.4 / §3.3 同步降级 v1 向量层为 pgvector（v2 切 Qdrant）、v1 图层为 decisions 自引用 + recursive CTE（v2 切 Neo4j/Kuzu）；详见 03-SCHEMA.md |
 | v1.2 | 2026-04-27 | 范围级修订（D6 决策触发）：§3.3 加任务调度切换条件（v1 = APScheduler / v2 = Celery + Redis）；§4.1 LLM 资源更新为 Doubao 2.0（heavy）+ Doubao 1.6（light）+ Doubao Embedding v1，TPM 1w 单人 / 3w 小组；§3.2 微调禁止理由改为 Doubao 商业 API 不开放微调 |
+| v1.3 | 2026-04-29 | 协作结构修订（NPU-src 在 commit 418431f 推送 AB 测试框架后触发）：§10.2 由"单人 + Claude"扩为"双贡献者 + Claude"，加 NPU-src 子领地 = `benchmark/fixtures/`；§10.3 由"单人纪律"重写为"多人协作纪律"（pull-before-push、删文件前确认、新路径必更 04-ENGUIDE §1） |

@@ -6,6 +6,42 @@
 
 ---
 
+## 2026-04-29 · Day 8 · NPU-src 整合 + 协作纪律 v1.3
+
+### 改动（czhang076 + Claude）
+- 整合 NPU-src 在 commit `418431f` 推送的 AB 测试框架（fast-forward 拉取）
+- **fixture 路径重组**：`tests/fixtures/*` → `benchmark/fixtures/*`（04-ENGUIDE §1 对齐）；`tests/validate_fixtures.py` → `benchmark/validate_fixtures.py`（修复 import 路径 + sys.path 兜底，支持脚本与模块两种调用）
+- 新建 `benchmark/__init__.py` + `benchmark/fixtures/__init__.py`
+- **删除被 v3.3 取代的旧文档**：`ARCHITECTURE.md` / `METRICS.md` / `TEST_CASES_AB.md`（其内容已被 docs/02-DESIGN 和新建的 docs/06-benchmark-design 取代）
+- **新建 [docs/06-benchmark-design.md](./docs/06-benchmark-design.md) v1.0**：基于 NPU-src TEST_CASES_AB 重组为标准化文档；TC001-TC009 + 评分规则 + fixture 契约；与宪法 §8 承诺值显式对照；与 04-ENGUIDE §8 接口一一映射
+- **宪法 [v1.2 → v1.3](./docs/01-CONSTITUTION.md)**：§10.2 双贡献者结构 + §10.3 多人协作纪律重写 + §11 状态行 + 附录 B v1.3 行
+- **CLAUDE.md [v1.2 → v1.3](./CLAUDE.md)**：§3.1 双贡献者 + 多人协作纪律落地
+
+### NPU-src 贡献（独立 commit 418431f）
+- TC001 / TC002 fixture 数据（已迁到 `benchmark/fixtures/`，结构无变化）
+- TC001-TC009 测试用例设计（已重组为 docs/06-benchmark-design.md）
+- 旧 ARCHITECTURE.md / METRICS.md（已识别为 v3.3 取代品，本轮删除）
+
+### 决策
+- **整合方案 (A)**：保留 NPU-src 有价值产出，删除被 v3.3 淘汰的旧文档，迁移 fixture 路径
+- **NPU-src 子领地 = `benchmark/fixtures/`**（宪法 §10.2）
+- **多人协作纪律**：每次 push 前 `git pull origin main`；删文件前 grep 引用 + 跟另一贡献者确认；新路径必更 04-ENGUIDE §1
+- **T-001 ticket 文档已就绪**（昨日草稿，今日确认），等本 commit push 后实施 21 文件实际生成
+
+### 遗留
+- **T-001 实施待启动**：pyproject.toml + .env.example + docker-compose.yml + 包结构 + 各 __init__.py 约 21 文件（暂停在 commit `e87504c` 后）
+- TC003-TC009 fixture 待建（T-005 阶段实施）
+- TC001 fixture v0.1 噪声 100 条 → 赛事级 1000 条目标，T-005 扩展
+- 与 NPU-src 实际人对人沟通：发个 ping 让他读 04-ENGUIDE §1 + 宪法 §10.3，避免下次再复活旧文档（这是 czhang076 的人工动作，不属于 Claude 任务）
+
+### LLM 调用
+本会话 0 次生产调用（文件操作 + 文档生成）
+
+### 当日 LLM 调用累计
+0 次
+
+---
+
 ## 2026-04-27 · Day 6 · 文档体系底座
 
 ### 改动
