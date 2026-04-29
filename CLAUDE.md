@@ -236,10 +236,11 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 ## 7. 当前阶段状态（Auto-Updated）
 
-当前周期：Phase 2 / Day 6（文档体系初建）
-七大机制实现进度：M1–M7 = 未启动
-三大主测试 fixture：未建
-评测达标情况：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-最近修订：2026-04-27 对齐 DESIGN.md v3.3，建立 docs/01-CONSTITUTION.md
+当前周期：Phase 2 / Day 8（T-001 项目基线落地，可启动业务代码 ticket）
+七大机制实现进度：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）
+三大主测试 fixture：TC001 / TC002 v0.1 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
+评测达标情况：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分（基础设施就位，等业务代码）
+代码骨架：✅ 22 文件 + 71 包 + Docker PG+pgvector 0.8.2 + pre-commit 全过 + pytest 通；下一个 ticket = T-002（models / types / exceptions / config / schema.sql）
+最近修订：2026-04-29 v1.3（双贡献者协作纪律 + T-001 完成）
 
 > 此节每天更新一次。Agent 启动时确认此节是最新状态。
