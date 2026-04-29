@@ -1,0 +1,48 @@
+# 04-ENGUIDE §10.1 落地
+# 用法：uv pip install pre-commit && pre-commit install
+
+repos:
+  # ─── Ruff: 格式化 + 检查（替代 black + flake8 + isort） ───
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
+    hooks:
+      - id: ruff-format
+      - id: ruff
+        args: ["--fix"]
+
+  # ─── Mypy strict ───────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        args: ["--strict", "--ignore-missing-imports"]
+        additional_dependencies:
+          - "pydantic>=2.5"
+          - "sqlalchemy>=2.0"
+          - "pydantic-settings>=2.1"
+          - "structlog>=24.1"
+        exclude: ^(migrations/versions/|tests/fixtures/|benchmark/fixtures/)
+
+  # ─── 通用文件检查 ─────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # ─── 本地 hook（待 T-003 启用） ───────────────────────
+  # - repo: local
+  #   hooks:
+  #     - id: validate-consistency
+  #       name: schema.sql ↔ models.py 漂移检查
+  #       entry: python scripts/validate_consistency.py
+  #       language: python
+  #       pass_filenames: false
+  #       always_run: true

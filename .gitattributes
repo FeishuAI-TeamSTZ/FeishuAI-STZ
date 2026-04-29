@@ -1,0 +1,24 @@
+# 默认所有文本文件用 LF 行尾（Linux / WSL / macOS / Git 友好）
+* text=auto eol=lf
+
+# Windows 原生脚本保留 CRLF
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+
+# 显式 LF
+*.sh    text eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.sql   text eol=lf
+*.toml  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+
+# 二进制（不做行尾转换）
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary

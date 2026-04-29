@@ -1,0 +1,149 @@
+[project]
+name = "feishu-memory-engine"
+version = "0.1.0"
+description = "飞书决策一致性引擎 — 企业级决策原子 + 演化谱系记忆系统（飞书 AI 校园挑战赛 题二 方向 B）"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "czhang076", email = "czhang076@e.ntu.edu.sg" },
+    { name = "NPU-src", email = "1393424688@qq.com" },
+]
+keywords = ["feishu", "memory", "rag", "decision-atom", "agent"]
+
+dependencies = [
+    # 数据 + 迁移
+    "sqlalchemy>=2.0,<3",
+    "alembic>=1.13,<2",
+    "psycopg[binary]>=3.1,<4",
+    "pgvector>=0.2,<1",
+    # 业务对象 + 配置
+    "pydantic>=2.5,<3",
+    "pydantic-settings>=2.1,<3",
+    # Web + HTTP
+    "fastapi>=0.110,<1",
+    "uvicorn[standard]>=0.27,<1",
+    "httpx>=0.27,<1",
+    # 调度 + 缓存（D6: v1 = APScheduler）
+    "apscheduler>=3.10,<4",
+    "cachetools>=5.3,<6",
+    # 日志
+    "structlog>=24.1,<25",
+]
+
+[project.optional-dependencies]
+dev = [
+    # 测试
+    "pytest>=8.0,<9",
+    "pytest-mock>=3.12,<4",
+    "pytest-cov>=4.1,<5",
+    "testcontainers[postgres]>=4.0,<5",
+    "respx>=0.20,<1",
+    "freezegun>=1.4,<2",
+    # Lint + 格式 + 类型
+    "ruff>=0.4,<1",
+    "mypy>=1.10,<2",
+    "pre-commit>=3.6,<4",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "memory_engine*",
+    "feishu_integration*",
+    "cli*",
+    "benchmark*",
+    "scripts*",
+]
+exclude = ["tests*", "migrations*", "docs*", "tickets*"]
+
+# ─────────────────────────────────────────────────────────
+# Ruff（替代 black + flake8 + isort）
+# ─────────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "B",       # bugbear
+    "C4",      # comprehensions
+    "UP",      # pyupgrade
+    "SIM",     # simplify
+    "RET",     # return
+    "PTH",     # pathlib
+]
+ignore = [
+    "E501",  # line length（formatter 处理）
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.per-file-ignores]
+"benchmark/fixtures/*.py" = ["E501"]   # fixture 数据文件允许长行
+
+# ─────────────────────────────────────────────────────────
+# Mypy strict
+# ─────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+exclude = ["migrations/versions/", "tests/fixtures/"]
+
+[[tool.mypy.overrides]]
+module = ["pgvector.*", "cachetools.*", "apscheduler.*", "testcontainers.*"]
+ignore_missing_imports = true
+
+# ─────────────────────────────────────────────────────────
+# Pytest
+# ─────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests", "benchmark"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "live: 命中真实外部服务（默认跳过；CI 不跑）",
+    "slow: 单测 > 1s",
+    "integration: 集成测（需 PG 容器）",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning",
+]
+
+# ─────────────────────────────────────────────────────────
+# Coverage（占位，待首个真业务 ticket 时启用阈值）
+# ─────────────────────────────────────────────────────────
+[tool.coverage.run]
+source = ["memory_engine", "feishu_integration", "cli"]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false

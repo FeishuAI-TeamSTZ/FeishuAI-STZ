@@ -1,0 +1,43 @@
+# T-001 D8 决策：本地 PG 16 + pgvector 扩展
+# 用法：
+#   docker compose up -d postgres        # 启动
+#   docker compose ps                    # 检查 healthy
+#   docker compose down                  # 停止（保留卷）
+#   docker compose down -v               # 停止并清空数据卷
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: feishu-memory-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: memory
+      POSTGRES_USER: memory
+      POSTGRES_PASSWORD: memory
+      # 演示前可改为强密码（同步改 .env）
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memory -d memory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    # 性能调优（demo 级别，生产需重新评估）
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "log_statement=none"
+
+volumes:
+  pgdata:
+    driver: local
+    # 注：Docker Desktop disk image location 已迁到 E:\Docker\DockerDesktopWSL\
+    # 因此该 volume 的实际数据在 E 盘，不挤占 C 盘
