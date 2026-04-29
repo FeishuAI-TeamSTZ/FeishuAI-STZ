@@ -34,7 +34,7 @@ print(f'预期答案: {CORE_DECISION["expected_answer"]}')
 print(f'噪声消息数量: {len(NOISE_MESSAGES)} 条')
 print()
 print('噪声分布:')
-types = {}
+types: dict[str, int] = {}
 for msg in NOISE_MESSAGES:
     t = msg['type']
     types[t] = types.get(t, 0) + 1
@@ -66,7 +66,7 @@ print('=' * 60)
 print('测试配置')
 print('=' * 60)
 print(f'TC001: 噪声目标{TC001_CONFIG["total_noise_count"]}条，模拟{TC001_CONFIG["simulation_days"]}天')
-print(f'TC001: 通过阈值{TC001_CONFIG["pass_threshold"]*100}%')
-print(f'TC002: 迭代{TC002_CONFIG["iteration_count"]}次，通过阈值{TC002_CONFIG["pass_threshold"]*100}%')
+print(f'TC001: 通过阈值{TC001_CONFIG["pass_threshold"] * 100}%')  # type: ignore[operator]
+print(f'TC002: 迭代{TC002_CONFIG["iteration_count"]}次，通过阈值{TC002_CONFIG["pass_threshold"] * 100}%')  # type: ignore[operator]
 print()
 print('✅ 测试数据加载成功！')
