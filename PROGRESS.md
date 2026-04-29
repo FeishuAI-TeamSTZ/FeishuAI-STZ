@@ -120,3 +120,71 @@
 0 次生产调用（全部为文档创作 + 资源配置刷新）。
 
 ---
+
+## 2026-04-29 · Day 8 · NPU-src 整合 + T-001 项目基线落地
+
+### 早间 — NPU-src AB 测试框架整合（commit 418431f → a890dc0）
+
+**背景**：NPU-src 在 commit `418431f` 推送了 AB 测试框架（TC001-TC009 + 数据 fixture），但同时复活了我们已删除的旧文档（ARCHITECTURE.md / METRICS.md），并把 fixture 放在了 `tests/fixtures/`（与 04-ENGUIDE §1 规约的 `benchmark/fixtures/` 不一致）。
+
+**改动**（commit `a890dc0 feat: 整合 NPU-src AB 测试框架 + 协作纪律 v1.3`）：
+- `git pull` 拉下 418431f
+- 重新删除 `ARCHITECTURE.md` / `METRICS.md`（与 v3.3 设计冲突）
+- `git mv tests/fixtures/* → benchmark/fixtures/`（保留 git history）
+- `git mv tests/validate_fixtures.py → benchmark/validate_fixtures.py`（修 import 路径 + 加 sys.path 兜底）
+- 新建 `benchmark/__init__.py` + `benchmark/fixtures/__init__.py`
+- 把 `TEST_CASES_AB.md`（111 行）整合并升级为 [docs/06-benchmark-design.md](./docs/06-benchmark-design.md) v1.0（408 行；TC001-TC009 + 评分规则 + 与宪法承诺值 + 04-ENGUIDE §8 接口对应表）
+- [docs/01-CONSTITUTION.md](./docs/01-CONSTITUTION.md) v1.2 → v1.3：§10.2 加 NPU-src 为 active 贡献者，§10.3 由"单人纪律"重写为"多人协作纪律"（pull-before-push、删文件先确认、新路径必更 04-ENGUIDE §1）
+- [CLAUDE.md](./CLAUDE.md) v1.2 → v1.3：§3.1 双贡献者 + 子领地划分
+
+**决策**：
+- 整合方案 = **(A) 全盘整合**：保留 NPU-src 有价值产出（TC001/TC002 fixture v0.1）；删除冗余旧文档
+- NPU-src 加为 active 贡献者，子领地 = `benchmark/fixtures/`
+- 06-benchmark-design v1.0 不重写 NPU-src 内容，而是包裹标准化 doc header + 加交叉引用
+
+### 午间 — T-001 项目基线实施（WSL 内）
+
+**改动顺序**（共 5 个 commit）：
+
+1. `c427a26 feat(T-001): 项目基线 + 包结构（22 文件）` —— pyproject.toml、.python-version、.env.example、.gitattributes、.pre-commit-config.yaml、alembic.ini、docker-compose.yml、migrations/env.py、conftest.py、tests/conftest.py、~10 个 `__init__.py`、README.md（quick-start 段落）
+2. `a69dbb1 fix(T-001): mypy exclude 加 benchmark/fixtures/ 与 validate_fixtures.py` —— 数据文件不挤 mypy --strict
+3. `fbdfac7 fix(T-001): validate_fixtures.py 加最小类型注解通过 mypy strict` —— `types: dict[str, int] = {}`
+4. `1f6ac1a fix(T-001): pre-commit mypy exclude 加 validate_fixtures.py` —— exclude 模式补全
+5. `6f957ae chore(T-001): pre-commit auto-fixes + uv.lock` —— ruff 自动重格式化（imports 拆分、`# type: ignore[operator]`）+ 锁文件
+
+**T-001 DoD 全部 ✓**：
+- `uv sync` 装齐 71 包（生产 12 + 开发 9 + 传递依赖）
+- `pre-commit run --all-files` 全过（ruff format / ruff check / mypy --strict / yaml / toml / merge / large-file / line-ending）
+- `docker compose up -d postgres` → `feishu-memory-pg healthy` (端口 5432)
+- pgvector **0.8.2** 已装（PG 16 + plpgsql 1.0 + vector 0.8.2）
+- `uv run pytest -q` → `no tests ran in 0.01s`（exit 0 = 0 测试预期通过）
+- `uv run python -m benchmark.validate_fixtures` → TC001 / TC002 数据正常加载
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| **mypy --strict 把 NPU-src fixture 数据文件标红 7 处** | `[tool.mypy]` 加 exclude 列表 + pre-commit hook 同步 exclude；validate_fixtures.py 给 `types` 显式注解 |
+| **pyproject.toml 的 `tool.uv.dev-dependencies` 在 uv 0.11 已废弃** | 改用 `[dependency-groups] dev = [...]`（PEP 735） |
+| **bash heredoc + WSL 透传时 `[[ ... ]]` 模式匹配崩** | 简化为 `sleep + 直接验证`，避免在 wsl bash -lc '...' 内嵌套复杂 bash 控制流 |
+| **WSL 端 git push 卡 credential prompt（PAT 未存）** | format-patch 绕道：WSL `git format-patch` → 落到 `/mnt/e/wsl-patches/` → Windows `git am` 应用 → Windows push（凭据已存） → WSL `git pull` 同步回拉 |
+| **Git Bash 的 MSYS_PATH_CONV 把 `/home/...` 改写成 `D:/Git/home/...`** | 全程 `MSYS_NO_PATHCONV=1 wsl -d Ubuntu -u zero -- bash -lc '...'` |
+
+### 决策（本日新锁定）
+
+- **mypy --strict 范围**：业务代码（memory_engine / feishu_integration / cli / scripts / migrations）严管；benchmark/fixtures + validate_fixtures.py exclude（数据文件容许灵活）
+- **uv 依赖组语法**：用 PEP 735 `[dependency-groups]` 而非旧的 `[tool.uv.dev-dependencies]`
+- **WSL push 工作流**：当前阶段 WSL 端不存 PAT，用 format-patch 中转；T-002 前可改用 Git Credential Manager bridge 或写 `~/.git-credentials`
+
+### 遗留 / 下一步
+
+- **WSL git push 流程**：暂用 format-patch 中转。T-002 前可执行 `git config --global credential.helper '/mnt/c/Program\ Files/Git/mingw64/bin/git-credential-manager.exe'` 让 WSL 共享 Windows 凭据
+- **pgvector Python binding**：容器侧已装 0.8.2，但 SQLAlchemy 侧 `pgvector` Python 包尚未冒烟测试 → T-002 ORM 实现时验证
+- **下一个 ticket = T-002**：写 `memory_engine/{models.py, types.py, exceptions.py, config.py}` + `schema.sql` + `scripts/validate_consistency.py`（首个真业务代码 ticket）
+- **NPU-src 协作沟通**：建议告知他读 [04-ENGUIDE §1](./docs/04-ENGUIDE.md) 路径规约 + [01-CONSTITUTION §10.3](./docs/01-CONSTITUTION.md) 协作纪律，避免下次推送再复活旧文档
+
+### LLM 调用
+
+本日累计 0 次生产调用（全部为文档 + 项目骨架 + 工具链整合）。Claude Code 协作约 ~15 轮，含 NPU-src 冲突分析、T-001 22 文件批量生成、5 次 pre-commit 修复迭代、format-patch 同步策略推导。
+
+---
