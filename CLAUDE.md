@@ -243,4 +243,3 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 最近修订：2026-04-27 对齐 DESIGN.md v3.3，建立 docs/01-CONSTITUTION.md
 
 > 此节每天更新一次。Agent 启动时确认此节是最新状态。
-

@@ -9,6 +9,7 @@
 
 T-001 占位：仅设置 env 框架；首个真实迁移 0001_initial_schema.py 由 T-003 生成。
 """
+
 from __future__ import annotations
 
 import os
