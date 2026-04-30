@@ -16,10 +16,13 @@
 3. `docs/02-DESIGN.md` — 项目架构设计
 4. `docs/03-SCHEMA.md` — 数据模型规约
 5. `docs/04-ENGUIDE.md` — 主线工程实施纲要
-6. 当前 ticket（位于 `tickets/` 目录）
+6. `docs/06-benchmark-design.md` — 评测设计（TC001-TC009）
+7. 当前 ticket（位于 `tickets/` 目录）
 
 如果上下文中有任何缺失，**立刻列出**，不要假设。
-**禁止**：跳过 1-5 直接进入 ticket。任何代码必须基于宪法和 Schema。
+**禁止**：跳过 1-6 直接进入 ticket。任何代码必须基于宪法和 Schema。
+
+> 注：`docs/05-edge-discipline.md` 跨源接入边界文档**待建**（宪法 §3.3 跨源条件触发后才需要），当前可跳过加载，不算"缺失"。
 
 ---
 
@@ -33,7 +36,7 @@
 
 具体应用：
 - ❌ "我假设 evolution_type 默认是 ROOT"
-- ✅ "Schema 没说 evolution_type 默认值。我看到三种可能：(a) 设置默认值 ROOT；(b) 必填；(c) Optional[None]。我倾向 (b)，因为符合 W8 不变量，是否同意？"
+- ✅ "Schema 没说 evolution_type 默认值。我看到三种可能：(a) 设置默认值 ROOT；(b) 必填；(c) Optional[None]。我倾向 (b)，因为符合 W2 演化关系不变量与 03-SCHEMA §2.2 CHECK 约束，是否同意？"
 
 ### 1.2 外科手术式改动（Surgical Changes）
 
@@ -98,10 +101,11 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 `schema.sql` 和 `models.py` 必须一一对应。
 
 **任何 Schema 改动**：
-1. 先改 `schema.sql`
-2. 再改 `models.py`
-3. 跑 `python validate_consistency.py` 确认无漂移
-4. 在 PR 中说明"我改了 X 字段，原因 Y"
+1. 先改 [`docs/03-SCHEMA.md`](./docs/03-SCHEMA.md)（数据契约源头）
+2. 再改 `schema.sql`（T-002 创建后启用）
+3. 再改 `memory_engine/models.py`（T-002 创建后启用）
+4. 跑 `python scripts/validate_consistency.py`（T-003 实现后启用）
+5. 在 PR 中说明"我改了 X 字段，原因 Y"
 
 不允许只改一边。
 
@@ -116,10 +120,10 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 ### 2.6 不引入新依赖（No New Dependencies）
 
-`requirements.txt` 已经够用。
+`pyproject.toml` 已锁定 21 包（生产 12 + 开发 9，PEP 621 `[project.optional-dependencies]`）+ `uv.lock` 锁版本，已经够用。
 
 如果你认为需要新依赖：
-1. 在 PR 描述中明文说明：依赖名 / 用途 / 替代方案
+1. 在 PR 描述中明文说明：依赖名 / 用途 / 替代方案 / 是否纯 dev 工具
 2. 至少一名 active 贡献者（见宪法 §10.2）✅ 才能加入
 3. 默认拒绝（除非真的必需）
 
@@ -196,7 +200,7 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 如果遇到以下情况，**立刻停止编码，等待人工决策**：
 
-1. ticket 与宪法/ADR/Schema 冲突
+1. ticket 与宪法 / 02-DESIGN / 03-SCHEMA / 04-ENGUIDE 冲突
 2. ticket 描述模糊到无法开始
 3. 需要新依赖
 4. 需要修改 schema.sql
@@ -215,10 +219,11 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 /docs/02-DESIGN.md                # 项目架构设计
 /docs/03-SCHEMA.md                # 数据模型规约
 /docs/04-ENGUIDE.md               # 主线工程实施纲要
-/docs/05-edge-discipline.md       # 延伸边界
-/docs/06-benchmark-design.md      # 评测设计
-当前 ticket
+/docs/06-benchmark-design.md      # 评测设计（TC001-TC009）
+当前 ticket（位于 tickets/ 目录）
 如有缺失，先列出，不要假定。
+
+注：/docs/05-edge-discipline.md 待建（跨源 OKR/审批/妙记/日历真接入触发后才写，宪法 §3.3）；当前可跳过，不算缺失。
 
 ---
 

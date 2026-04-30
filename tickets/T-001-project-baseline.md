@@ -186,4 +186,7 @@ pytest tests/ -q
 
 ---
 
-> **状态**：📝 草稿 · 待用户审定 · 审通过后我立即生成全部 21 个文件 + commit + push
+> **状态**：✅ **已完成**（2026-04-29）
+> **commit 链**：[c427a26](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/c427a26) → [a69dbb1](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/a69dbb1) → [fbdfac7](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/fbdfac7) → [1f6ac1a](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/1f6ac1a) → [6f957ae](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/6f957ae)
+> **DoD 全 ✓**：71 包装齐 / pre-commit 全过 / PG 容器 healthy / pgvector 0.8.2 / pytest 0 测试 exit 0 / validate_fixtures OK
+> **后续 ticket**：T-002（数据层 ORM + schema.sql）

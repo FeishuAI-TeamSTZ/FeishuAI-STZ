@@ -3,7 +3,7 @@
 > **文档编号**：03-SCHEMA
 > **版本**：v1.0
 > **生效日期**：2026-04-27
-> **上级文档**：[01-CONSTITUTION.md](./01-CONSTITUTION.md) v1.1
+> **上级文档**：[01-CONSTITUTION.md](./01-CONSTITUTION.md) v1.3
 > **架构对齐**：[02-DESIGN.md](./02-DESIGN.md) v3.3-focused
 
 ---
@@ -605,7 +605,7 @@ v1 只有 PostgreSQL 单库（含 pgvector），所有写入在同一事务内 c
 | W9 | OKR 权重永远最高 | 配置 | `CONSENSUS_WEIGHTS` 常量（OKR=0.4 顶档） |
 | W10 | Soft 高不确定走确认卡片 | App | `card_type` 决策树 |
 | W11 | 24 h 内不重复推同一决策对 | DB+App | `idx_cards_dedup` + 应用层查询 |
-| W12 | Seed-2.0 额度耗尽切本地 | App | `utils.heavy_llm_extract` 内的额度计数器 |
+| W12 | Doubao 额度耗尽切本地 | App | `utils.heavy_llm_extract` 内的额度计数器 |
 | W13 | 飞书 API 必记 trace_id | **DB** | `trace_log.trace_id` PK NOT NULL；应用层无 trace 即 raise |
 | W14 | 单用户 5/日卡片上限 | **DB** | `card_quota.count` CHECK ≤ `max_daily` |
 | W15 | 非工作时段暂停非紧急卡片 | App | 推送前查 `users.work_hour_*`；hard 拦截 W15 不阻 |

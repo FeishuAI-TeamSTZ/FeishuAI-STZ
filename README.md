@@ -19,7 +19,8 @@
 | 04 | [docs/04-ENGUIDE.md](./docs/04-ENGUIDE.md) | 工程实施纲要（§8 接口契约总表） |
 | 06 | [docs/06-benchmark-design.md](./docs/06-benchmark-design.md) | 评测设计（TC001–TC009） |
 
-阅读顺序：先 CLAUDE → 01 → 02 → 03 → 04 → 当前 ticket。
+阅读顺序：先 CLAUDE → 01 → 02 → 03 → 04 → 06 → 当前 ticket。
+（05-edge-discipline.md 待建，跨源 OKR/审批/妙记/日历真接入触发后才写。）
 
 ---
 

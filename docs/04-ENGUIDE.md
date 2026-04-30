@@ -3,7 +3,7 @@
 > **文档编号**：04-ENGUIDE
 > **版本**：v1.0
 > **生效日期**：2026-04-27
-> **上级文档**：[01-CONSTITUTION.md](./01-CONSTITUTION.md) v1.1
+> **上级文档**：[01-CONSTITUTION.md](./01-CONSTITUTION.md) v1.3
 > **架构对齐**：[02-DESIGN.md](./02-DESIGN.md) v3.3-focused
 > **数据契约**：[03-SCHEMA.md](./03-SCHEMA.md) v1.0
 
@@ -897,7 +897,7 @@ cold_path.process_event(event)
 | 变量 | 说明 | 示例 |
 |:---|:---|:---|
 | `DATABASE_URL` | PG 连接串 | `postgresql+psycopg://user:pwd@localhost:5432/feishu` |
-| `DOUBAO_API_KEY` | Seed-2.0 / Doubao 1.6 API Key | (赛事认领) |
+| `DOUBAO_API_KEY` | Doubao 2.0 / 1.6 / Embedding 共用 API Key | (火山引擎认领) |
 | `DOUBAO_ENDPOINT_ID` | EP ID | `ep-202604-xxxx` |
 | `DOUBAO_EMBEDDING_ENDPOINT` | 嵌入 EP | `ep-202604-xxxx` |
 | `FEISHU_APP_ID` | 飞书应用 ID | — |
