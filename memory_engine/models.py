@@ -139,9 +139,7 @@ class UserModel(Base):
     work_hour_end: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, server_default=text("19")
     )
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("true")
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
@@ -199,9 +197,7 @@ class DecisionModel(Base):
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     predicate: Mapped[str] = mapped_column(String(255), nullable=False)
     object: Mapped[str] = mapped_column(Text, nullable=False)
-    logical_timestamp: Mapped[datetime] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=False
-    )
+    logical_timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     extracted_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
@@ -226,15 +222,11 @@ class DecisionModel(Base):
     )
     source_event_id: Mapped[str | None] = mapped_column(Text)
     original_text: Mapped[str | None] = mapped_column(Text)
-    access_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    access_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     last_accessed_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
-    confirm_count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    confirm_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     last_confirmed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     last_decay_calc_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
@@ -266,12 +258,8 @@ class DecisionModel(Base):
         ),
         CheckConstraint("confidence BETWEEN 0 AND 1", name="chk_decisions_confidence"),
         CheckConstraint("uncertainty BETWEEN 0 AND 1", name="chk_decisions_uncertainty"),
-        CheckConstraint(
-            "consensus_score BETWEEN 0 AND 1", name="chk_decisions_consensus_score"
-        ),
-        CheckConstraint(
-            "business_impact BETWEEN 0 AND 1", name="chk_decisions_business_impact"
-        ),
+        CheckConstraint("consensus_score BETWEEN 0 AND 1", name="chk_decisions_consensus_score"),
+        CheckConstraint("business_impact BETWEEN 0 AND 1", name="chk_decisions_business_impact"),
         CheckConstraint(
             "access_count >= 0 AND confirm_count >= 0",
             name="chk_decisions_counts_nonneg",
@@ -315,24 +303,16 @@ class CardQuotaModel(Base):
 
     __tablename__ = "card_quota"
 
-    user_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("users.user_id"), primary_key=True
-    )
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey("users.user_id"), primary_key=True)
     quota_date: Mapped[date] = mapped_column(primary_key=True)
-    count: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
-    max_daily: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("5")
-    )
+    count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    max_daily: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("5"))
     updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
 
     __table_args__ = (
-        CheckConstraint(
-            "count >= 0 AND count <= max_daily", name="chk_card_quota_count"
-        ),
+        CheckConstraint("count >= 0 AND count <= max_daily", name="chk_card_quota_count"),
     )
 
 
@@ -344,9 +324,7 @@ class CardModel(Base):
     card_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
     )
-    user_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("users.user_id"), nullable=False
-    )
+    user_id: Mapped[str] = mapped_column(String(64), ForeignKey("users.user_id"), nullable=False)
     decision_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("decisions.decision_id"),
@@ -365,9 +343,7 @@ class CardModel(Base):
     response: Mapped[CardResponse | None] = mapped_column(_CRESP_SQL)
     pushed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
     responded_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
-    trace_id: Mapped[str | None] = mapped_column(
-        String(64), ForeignKey("trace_log.trace_id")
-    )
+    trace_id: Mapped[str | None] = mapped_column(String(64), ForeignKey("trace_log.trace_id"))
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
     )
