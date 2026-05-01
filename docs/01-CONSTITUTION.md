@@ -393,14 +393,14 @@
 
 > 本节是宪法中 **唯一允许频繁更新** 的部分（一日内最多 1 次，会话末尾 commit）。
 
-- **当前阶段**：Phase 2 / Day 8（文档体系完工 + NPU-src 整合 + T-001 ticket 待实施）
-- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）
+- **当前阶段**：Phase 2 / Day 10（T-002 数据持久化层落地，可启动业务对象层）
+- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层就位（schema.sql + ORM + 异常树）
 - **三大主测试 fixture**：TC001 / TC002 v0 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
 - **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-- **代码骨架**：尚未建立（无 `memory_engine/`、`feishu_integration/`、`tests/`、`schema.sql`、`models.py`）；首个代码 ticket = T-001（pyproject + 包结构 + Docker）
+- **代码骨架**：✅ T-001（22 文件 + 71 包 + Docker PG）+ T-002（schema.sql 290 行 + memory_engine/models.py 437 行 + memory_engine/exceptions.py 121 行）；**W2 / W14 CHECK 已在 DB 层验证（正负样本均通）**；下一个 ticket = T-003（types.py + config.py + validate_consistency.py）
 - **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE / 06-benchmark-design 已建（v1.0+）；05 待建
 - **active 贡献者**：czhang076（架构 + 文档 + 工程）+ NPU-src（评测数据） + Claude Code 副驾
-- **最近修订**：2026-04-29 v1.3（NPU-src 在 418431f 推送 AB 测试框架后整合：§10.2 加 NPU-src 为 active 贡献者，§10.3 改写为多人协作纪律）
+- **最近修订**：2026-05-01 T-002 完成 8/8 DoD（schema 灌通 + ORM import + 异常 25 类 + W2/W14 正负样本全过 + mypy --strict + pre-commit 全过）
 
 ---
 

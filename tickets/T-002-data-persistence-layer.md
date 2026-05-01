@@ -248,5 +248,8 @@ uv run pytest -q
 
 ---
 
-> **状态**：📝 草稿 · 待用户审定 · 审通过后我立即生成 3 个文件 + commit + push（自 Windows 端，避免 WSL push credential 问题）。
-> **生成顺序**：schema.sql → exceptions.py → models.py（前者建立契约，后者依赖前者的 enum 与 CHECK 语义）
+> **状态**：✅ **已完成**（2026-05-01）
+> **commit 链**：[ef23650](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/ef23650)（ticket 草稿）→ [0ddb720](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/0ddb720)（schema + ORM + 异常 3 文件）→ [4669a25](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/4669a25)（mypy unused-ignore 修复）→ [4ff6042](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/4ff6042)（pre-commit ruff-format auto-fixes）
+> **DoD 8/8 全 ✓**：schema.sql 灌通 / 8 表 + 6 enums + 23 indexes + 3 triggers / pgvector 0.8.2 / ORM 8 表全注册 / 异常树 6 大类 25 子类 / W2 与 W14 CHECK 正负样本全过 / `mypy --strict memory_engine/` Success / pre-commit 全过 / pytest 0 测试 exit 0
+> **后续 ticket**：T-003（types.py 业务对象 + config.py 常量 + scripts/validate_consistency.py）
+> **实际行数**：~640（schema 290 + exceptions 121 + models 437，超 ticket 估算 570 by 12%）

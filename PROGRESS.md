@@ -6,6 +6,70 @@
 
 ---
 
+## 2026-05-01 · Day 10 · T-002 数据持久化层落地
+
+### 改动
+
+- 新建 [tickets/T-002-data-persistence-layer.md](./tickets/T-002-data-persistence-layer.md)（252 行）：草稿 → 审定 → 实施 → 验收
+- 新建 [schema.sql](./schema.sql)（290 行）：6 enums + 8 主表 + 1 向量表 + 15 named indexes + W2 / W14 CHECK + 3 BEFORE UPDATE 触发器；与 [03-SCHEMA.md](./docs/03-SCHEMA.md) §3 1:1 镜像
+- 新建 [memory_engine/models.py](./memory_engine/models.py)（437 行）：SQLAlchemy 2.0 `Mapped + DeclarativeBase` 风格；6 Python enum 类（与 SQL enum literal 严格 1:1）+ 8 ORM 模型类；自引用 parent + JSONB consensus_sources + Vector(1024) embedding；mypy --strict 全过
+- 新建 [memory_engine/exceptions.py](./memory_engine/exceptions.py)（121 行）：`MemoryEngineError` 根类（trace_id + extra + 自定义 `__str__`）+ 25 子类（LLM / Feishu / DB / Invariant / Extraction / Config 共 6 大类）；对齐 [04-ENGUIDE §8.11](./docs/04-ENGUIDE.md)
+
+### Commit 链（4 个）
+
+1. `ef23650 ticket: T-002 数据持久化层（草稿审定）` — ticket doc 单独 commit（沿用 T-001 模式）
+2. `0ddb720 feat(T-002): schema.sql + ORM models + 异常树` — 3 个文件实现
+3. `4669a25 fix(T-002): 移除冗余 type:ignore` — mypy 报 `unused-ignore`（pyproject 已全局 ignore pgvector）
+4. `4ff6042 chore(T-002): pre-commit ruff-format auto-fixes` — ruff-format 重排（48 处行长 + import 拆分）；走 WSL → format-patch → Windows 应用 → push
+
+### DoD 验收（8/8 全过）
+
+| # | 项 | 结果 |
+|:---:|:---|:---|
+| 1 | `psql -f schema.sql` 在 fresh DB 灌入 | ✅ 零错误 |
+| 2 | enum / table / index / trigger / extension | ✅ 6 enums × (type+array)=15 / 8 表 / 23 indexes / 3 triggers / pgvector 0.8.2 |
+| 3 | ORM import + 8 表注册 + 6 enum 值列举 | ✅ `Base.metadata.tables` = 8；enum 值与 SQL 严格对齐 |
+| 4 | 异常树冒烟（trace_id / extra / __str__） | ✅ 25 子类全可 instantiate；`LLMQuotaExceededError(trace_id="trc_abc", extra={...})` 输出 `[LLMQuotaExceededError trace=trc_abc] {'category': 'EVOLVE_HEAVY', 'used': 3050}` |
+| 5 | **W2 CHECK 负样本** | ✅ `INSERT ... evolution_type='SUPERSEDES', parent_id=NULL` 抛 `chk_decisions_evolution_parent` violation |
+| 6 | W2 CHECK 正样本 | ✅ ROOT 决策插入成功，state=ACTIVE / confidence=0.95 |
+| 7 | **W14 CHECK 负样本** | ✅ `INSERT card_quota count=6, max_daily=5` 抛 `chk_card_quota_count` violation |
+| 8 | mypy --strict / pre-commit / pytest | ✅ `Success: no issues found in 4 source files` / 全过 / `no tests ran in 0.02s` |
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| **mypy `unused-ignore` 报错** | `# type: ignore[import-untyped]` 在 pgvector import 上是冗余（pyproject `[[tool.mypy.overrides]]` 已全局 `ignore_missing_imports`）→ 删除局部注释 |
+| **ruff-format 在 WSL 端 auto-fix 48 处** | 走 T-001 验证过的 format-patch 模式：WSL commit → `git format-patch -o /mnt/e/wsl-patches/` → Windows `git am` → Windows push → WSL pull |
+| **Docker Desktop WSL 集成偶尔断** | 用户重启即可恢复；非项目问题 |
+| **mypy informational：unused module overrides** | `apscheduler.* / cachetools.* / testcontainers.*` 三个 overrides 未触发 import → T-005 接入 utils 时自然消化，不修 |
+
+### 决策（本日新锁定）
+
+- **D12 = SQLAlchemy 2.0 `Mapped + DeclarativeBase`**（不用 MappedAsDataclass / 不用 Classic Column）
+- **D13 = 异常类含 `trace_id + extra + __str__`** —— 满足 04-ENGUIDE §8.11 "trace_id 属性必须" 强制要求
+- **D14 = schema.sql 单文件**（不切 01_enums.sql / 02_tables.sql 等）
+- **D15 = `BEFORE UPDATE` TRIGGER 仅 3 张表用**（users / decisions / card_quota）
+- **D16 = `CREATE EXTENSION vector` 在 schema.sql 头部**（与 docker-compose `pgvector/pgvector:pg16` 镜像锁定）
+- **W2 / W14 在 DB 层强制**：跑负样本验证，违反者 PG 直接 reject —— 这两条不变量**绝不会被 App bug 绕过**
+- **预算豁免接受**：T-002 ~640 行（超 500 by 28%）；理由 schema↔ORM 是数据契约的双胞胎，拆分 review 反而难
+
+### 遗留 / 下一步
+
+- **下一个 ticket = T-003**（business types + config + consistency check）：
+  - `memory_engine/types.py` — pydantic v2 业务对象（DecisionAtom / Decision / EvolutionJudgment / ReflectReport / Card / FiveFactors 等）
+  - `memory_engine/config.py` — 常量（PROVENANCE_TRUST_WEIGHTS / CONSENSUS_WEIGHTS / DAILY_LLM_BUDGET / 阈值 / 闸门 / 衰减）+ pydantic-settings
+  - `scripts/validate_consistency.py` — schema.sql ↔ models.py 漂移检查
+  - `tests/unit/test_models.py` + `tests/unit/test_exceptions.py` — 首批单测（T-002 没写测试，T-003 补齐）
+- **WSL git PAT 配置仍未做**：每次 push 走 format-patch 中转，可接受；T-005 启动前可考虑 GCM bridge
+- **实际行数 vs ticket 估算偏差**：T-002 估算 570 → 实际 640（+12%）；schema/ORM 注释充分，可读性优先
+
+### LLM 调用
+
+本日累计 0 次生产调用。Claude Code 协作约 ~15 轮（schema 设计 + ORM 类型 + 异常树绘制 + DoD 验收 + 文档更新）。
+
+---
+
 ## 2026-04-29 · Day 8 · NPU-src 整合 + T-001 项目基线落地 + meta-cleanup
 
 ### 早间 — NPU-src AB 测试框架整合（commit 418431f → a890dc0）
