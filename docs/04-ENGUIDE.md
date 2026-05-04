@@ -1,11 +1,11 @@
 # 04 · 主线工程实施纲要 (ENGUIDE)
 
 > **文档编号**：04-ENGUIDE
-> **版本**：v1.0
-> **生效日期**：2026-04-27
+> **版本**：v1.0.1
+> **生效日期**：2026-04-27（v1.0.1 修订日：2026-05-04）
 > **上级文档**：[01-CONSTITUTION.md](./01-CONSTITUTION.md) v1.3
 > **架构对齐**：[02-DESIGN.md](./02-DESIGN.md) v3.3-focused
-> **数据契约**：[03-SCHEMA.md](./03-SCHEMA.md) v1.0
+> **数据契约**：[03-SCHEMA.md](./03-SCHEMA.md) v1.0.1
 
 ---
 
@@ -894,17 +894,23 @@ cold_path.process_event(event)
 
 ### 9.1 必需环境变量
 
-| 变量 | 说明 | 示例 |
-|:---|:---|:---|
-| `DATABASE_URL` | PG 连接串 | `postgresql+psycopg://user:pwd@localhost:5432/feishu` |
-| `DOUBAO_API_KEY` | Doubao 2.0 / 1.6 / Embedding 共用 API Key | (火山引擎认领) |
-| `DOUBAO_ENDPOINT_ID` | EP ID | `ep-202604-xxxx` |
-| `DOUBAO_EMBEDDING_ENDPOINT` | 嵌入 EP | `ep-202604-xxxx` |
-| `FEISHU_APP_ID` | 飞书应用 ID | — |
-| `FEISHU_APP_SECRET` | 飞书应用密钥 | — |
-| `FEISHU_VERIFICATION_TOKEN` | webhook 验证 token | — |
-| `LOG_LEVEL` | 日志级别 | `INFO` / `DEBUG` |
-| `CACHE_BACKEND` | `memory` (v1) / `redis` (v2) | `memory` |
+| 变量 | 必填 | 说明 | 示例 / 默认 |
+|:---|:---:|:---|:---|
+| `DATABASE_URL` | ✓ | PG 连接串 | `postgresql+psycopg://memory:memory@localhost:5432/memory` |
+| `DOUBAO_API_KEY` | ✓ | Doubao Heavy / Light / Embedding 共用 API Key | (火山引擎认领) |
+| `DOUBAO_HEAVY_ENDPOINT_ID` | — | Doubao 2.0 EP（M2 演化判定 / M3 Reflect / 跨源对齐） | `ep-202604-xxxxxxxx` |
+| `DOUBAO_LIGHT_ENDPOINT_ID` | — | Doubao 1.6 EP（M1 提取 / 离线参数校准） | `ep-202604-xxxxxxxx` |
+| `DOUBAO_EMBEDDING_ENDPOINT_ID` | — | Doubao Embedding v1 EP（1024 维向量） | `ep-202604-xxxxxxxx` |
+| `DOUBAO_BASE_URL` | — | 火山方舟 Inference API 根 | `https://ark.cn-beijing.volces.com/api/v3` |
+| `LLM_TPM_TIER` | — | TPM 档位（`single` = 1w / `group` = 3w）；网关 §4.4 据此调上限 | `single` |
+| `FEISHU_APP_ID` | ✓ | 飞书应用 ID | — |
+| `FEISHU_APP_SECRET` | ✓ | 飞书应用密钥 | — |
+| `FEISHU_VERIFICATION_TOKEN` | ✓ | webhook 验证 token | — |
+| `FEISHU_ENCRYPT_KEY` | — | 飞书事件加密 key（开启加密时填） | — |
+| `LOG_LEVEL` | — | 日志级别 | `INFO` / `DEBUG` |
+| `ENVIRONMENT` | — | 运行环境 | `development` / `staging` / `production` |
+| `CACHE_BACKEND` | — | `memory` (v1) / `redis` (v2) | `memory` |
+| `REDIS_URL` | — | 仅当 `CACHE_BACKEND=redis` 时填 | — |
 
 ### 9.2 `config.py` 必需常量
 
@@ -1102,3 +1108,4 @@ tests/      ←──同上 + utils mock
 | 版本 | 日期 | 变更 |
 |:---|:---|:---|
 | v1.0 | 2026-04-27 | 初稿。锁定 Python 3.11+ / SQLAlchemy 2.0 sync / pydantic v2 / FastAPI sync routes；§8 接口契约总表覆盖 M1–M7 + 共享工具 + CLI（共 ~25 函数签名）；W13/W14 双层强制（DB + 网关 + 巡检） |
+| v1.0.1 | 2026-05-04 | §9.1 环境变量表与 `.env.example` 对齐：拆分 Doubao 三档 EP（`HEAVY` / `LIGHT` / `EMBEDDING`）+ `DOUBAO_BASE_URL`；新增 `LLM_TPM_TIER`（§4.4 网关消费）+ `ENVIRONMENT` + `REDIS_URL` + `FEISHU_ENCRYPT_KEY`；标注必填 / 选填两栏 |
