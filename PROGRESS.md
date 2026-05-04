@@ -6,6 +6,72 @@
 
 ---
 
+## 2026-05-04 · Day 13 · T-003 业务对象 + 配置常量落地
+
+### 改动
+
+- 新建 [tickets/T-003-business-types-and-config.md](./tickets/T-003-business-types-and-config.md)（~150 行）：草稿 → 实施 → 验收（方案 B 路线：T-003 = types/config + 单测；T-004 留给 validate_consistency + alembic + 集成测）
+- 新建 [memory_engine/types.py](./memory_engine/types.py)（361 行）：pydantic v2 业务对象层；3 业务专属 enum（LLMCategory / SourceType / ConflictLevel）+ ORM enum re-export + 共享子模型 ConsensusSourceItem + 13 业务对象（DecisionAtom / Decision / EvolutionJudgment / ReflectContext / ReflectReport / FiveFactors / Card / CardAction / GateResult / LLMResponse / FeishuResponse / ProcessResult / InterceptDecision）；`Decision.from_orm()`(model_validate from_attributes) + `to_orm()`(model_dump + jsonb 收敛) 是 ORM ↔ 业务对象唯一桥
+- 新建 [memory_engine/config.py](./memory_engine/config.py)（159 行）：`Final` 常量层（PROVENANCE_TRUST_WEIGHTS / CONSENSUS_WEIGHTS / DAILY_LLM_BUDGET / 4 阈值 / 3 闸门 / 2 衰减 / 1 缓存 TTL）+ pydantic-settings `Settings`（5 必填 + 9 选填 env，对齐 04-ENGUIDE §9.1 v1.0.1）；`get_settings()` 包装 ValidationError → ConfigError
+- 新建 [tests/unit/test_models.py](./tests/unit/test_models.py)（152 行）+ [test_exceptions.py](./tests/unit/test_exceptions.py)（109 行）+ [test_types.py](./tests/unit/test_types.py)（240 行）+ [test_config.py](./tests/unit/test_config.py)（126 行）：W9 / W2 / W14 / W13 在测试中显式断言；总日预算 ≤ 10K 自检；Decision.from_orm round-trip
+- 文档微订正：
+  - [docs/03-SCHEMA.md](./docs/03-SCHEMA.md) v1.0 → v1.0.1：§5.1 五因子从"⚠️ 需澄清"改为锁定声明（02-DESIGN v3.3.1 已对齐 5 因子）；附录 C 新增 v1.0.1 行
+  - [docs/04-ENGUIDE.md](./docs/04-ENGUIDE.md) v1.0 → v1.0.1：§9.1 环境变量表与 `.env.example` 对齐（拆分 Doubao Heavy/Light/Embedding EP + DOUBAO_BASE_URL + LLM_TPM_TIER + ENVIRONMENT + REDIS_URL + FEISHU_ENCRYPT_KEY），加必填/选填两栏；附录 C 新增 v1.0.1 行
+- `.env.example` 无需改动（已包含目标键）
+
+### DoD 验收（10/10 全过）
+
+| # | 项 | 结果 |
+|:---:|:---|:---|
+| 1 | 6 文件创建 | ✅ types 361 / config 159 / 4 测试合计 627（test_models 152 + test_exceptions 109 + test_types 240 + test_config 126）；总 1147 行业务+测试代码（超 ticket 估算 590 by 94%，主要因测试覆盖广 + ruff-format 后空行规范） |
+| 2 | `from memory_engine.types import *` 不报错 | ✅ 13 业务对象 + 3 业务 enum + 6 ORM enum re-export 全部 importable |
+| 3 | `from memory_engine.config import settings, ...` 可读 | ✅ 13 常量 + Settings + get_settings 全部 importable |
+| 4 | `mypy --strict memory_engine/` Success | ✅ `Success: no issues found in 6 source files` |
+| 5 | `pre-commit run --all-files` 全过 | ✅ ruff-format / ruff / mypy / yaml / toml / merge / large-file / line-ending 全过 |
+| 6 | `pytest -q tests/unit/` 全过 | ✅ **73 passed in 0.99s**（test_models 20 + test_exceptions 26 + test_types 17 + test_config 13，含 parametrize 展开） |
+| 7 | W9 OKR 顶档自检 | ✅ `OKR=0.40 > max(others)=0.30`（test_config.test_w9_okr_top_weight） |
+| 8 | 总日预算 ≤ 10K | ✅ `sum(DAILY_LLM_BUDGET.values()) = 9500 ≤ 10000` |
+| 9 | Decision.from_orm/to_orm round-trip | ✅ Decimal → float 收敛；UUID / 七字段 / state / evolution_type 全保留（test_types.test_decision_from_orm_round_trip） |
+| 10 | PROGRESS.md 追加 Day 13 条目 | ✅ 即本节 |
+
+### 决策（本日新锁定）
+
+- **D17 = 业务 enum 放 types.py，ORM enum 留 models.py**：types.py re-export ORM enum，对外接口不再 import models（数据三层纪律）
+- **D18 = `Decision.from_orm` 用 `model_validate(model, from_attributes=True)`**：避免手工逐字段映射；Decimal → float 用 `field_validator(mode="before")` 收敛
+- **D19 = Settings fail-fast**：5 必填 env 缺失即 raise ConfigError（DATABASE_URL / DOUBAO_API_KEY / FEISHU_APP_ID / FEISHU_APP_SECRET / FEISHU_VERIFICATION_TOKEN）
+- **D20 = 单测不连真 PG**：ORM Model 只 instantiate + metadata 自检；端到端 SQL 端测留 T-004 用 testcontainers
+- **5 因子永久锁定**（03-SCHEMA §5.1 ⚠️ 块清理）：02-DESIGN v3.3.1 已对齐，03-SCHEMA v1.0.1 同步声明
+- **04-ENGUIDE §9.1 环境变量表与 .env.example 对齐**：拆分 Doubao 三档 EP + 新增 4 个开发期占位 env
+- **预算超出说明**：T-003 1147 行 / 7 文件（超 500 by 129% / 超 5 by 2）；测试占 55%，单测分组按模块一对一是 04-ENGUIDE §6.4 显式规约（commit 3 实际带入 .pre-commit-config.yaml 一并修订，文件数从 6 调到 7）
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| WSL `wsl --status` 输出乱码 + 一次 Hyper-V NAT 报错 | 重试 `wsl -d Ubuntu` 即恢复；非项目问题 |
+| Windows 端无 uv（py.exe 仅 3.13，pyproject 锁 3.12） | 走 PROGRESS Day 8 验证过的 `/mnt/e` 直读模式：Windows Write 后 `cp /mnt/e/... ~/FeishuAI-STZ/...` 同步到 WSL，`uv run` 在 WSL 端跑（避免 format-patch 中转） |
+| pydantic v2 + SQLAlchemy 2.0 互转 Decimal ↔ float | `field_validator(mode="before")` 在 Decision 类 import 时把 Decimal 转 float；test_decision_from_orm_round_trip 验通 |
+| Settings type checking 在 pydantic-settings 3 上 mypy 报 `[call-arg]` | 局部 `# type: ignore[call-arg]`（warn_unused_ignores=true 下不会误报） |
+| **pre-commit mypy hook 在测试文件上炸**（pytest 不在 hook venv → `@pytest.mark.parametrize` 被当 untyped 装饰器） | `.pre-commit-config.yaml` mypy `additional_dependencies` 加 `pytest>=8.0`；`uv run mypy memory_engine/` 之前过是因为只检 memory_engine/ 目录 |
+| **SQLAlchemy 2.0 `DeclarativeBase.__table__` 类型为 `FromClause`**（无 `.columns` / `.indexes` 属性） | test_models.py 用 `cast(Table, X.__table__)` 显式收窄（3 处）；删冗余 `# type: ignore[union-attr]` |
+
+### 遗留 / 下一步
+
+- **下一个 ticket = T-004**（validate_consistency + alembic 包装 + 集成测）：
+  - `scripts/validate_consistency.py` — 解析 schema.sql + introspect Base.metadata → 比对漂移
+  - `migrations/versions/0001_initial_schema.py` — alembic 包装 schema.sql
+  - `tests/integration/test_int_schema.py` — testcontainers PG 端到端
+  - 启用 [CLAUDE.md §2.4](./CLAUDE.md) 第 4 步（pre-commit 已预留 entry）
+- **commit 链待打**（本日只完成实施 + 测试 + 文档；尚未 commit；commit 节奏沿 T-002 的 4-commit 模式：ticket → 业务实现 → 文档订正 → 任何 fix）
+- **DTO 推迟**（FeishuMessage / FeishuDocChange / Event）：归 R2 接入领地，T-006 时建 `feishu_integration/types.py`
+- **T-003 测试未覆盖项**：Decision.parent 自引用 relationship 的递归 from_orm（M2 真接入时再处理；本 ticket 显式 exclude）
+
+### LLM 调用
+
+本日累计 0 次生产调用。Claude Code 协作约 ~12 轮（计划讨论 + ticket 草稿 + types/config 实施 + 4 单测 + 文档订正 + 验收）。
+
+---
+
 ## 2026-05-01 · Day 10 · T-002 数据持久化层落地
 
 ### 改动
