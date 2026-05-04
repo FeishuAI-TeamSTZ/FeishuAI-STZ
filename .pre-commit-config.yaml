@@ -21,6 +21,7 @@ repos:
           - "sqlalchemy>=2.0"
           - "pydantic-settings>=2.1"
           - "structlog>=24.1"
+          - "pytest>=8.0"  # T-003: 让 mypy 能解析 @pytest.mark.parametrize 装饰器
         # 排除：迁移生成代码 / 评测数据文件 / fixture 验证脚本（无 TypedDict 化前 strict 不友好；T-005 时再补）
         exclude: ^(migrations/versions/|tests/fixtures/|benchmark/fixtures/|benchmark/validate_fixtures\.py$)
 
