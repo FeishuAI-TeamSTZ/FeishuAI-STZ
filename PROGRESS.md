@@ -6,6 +6,46 @@
 
 ---
 
+## 2026-05-05 · Day 14 · T-003 push 完成 + T-004 ticket 草稿审定
+
+### 改动
+
+- T-003 4-commit 链推送至 origin（[26a71b6](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/26a71b6) → [eac5838](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/eac5838) → [36daf85](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/36daf85) → [3159f63](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/3159f63)）；WSL hard-reset 到 origin 收敛（WSL/Windows commit SHA 因 git am committer 时间重生成而不同，内容 `git diff` 验为空）
+- 新建 [tickets/T-004-validate-consistency-and-alembic.md](./tickets/T-004-validate-consistency-and-alembic.md)（340 行）— commit [d3b402e](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/d3b402e)：5 文件 / ~320 行 / 预算内（无豁免）；DoD 强化（**故意漂移自检**：临时加字段 → exit 1 → 删除 → exit 0）
+
+### 决策（本日新锁定，留待 T-004 实施期沿用）
+
+- **D21 = (a)** SQL 解析用正则（不引入 sqlparse 等新依赖；schema.sql 结构稳定，正则覆盖 ~95% + ORM introspect 兜底）
+- **D22 = (a)** alembic `0001_initial_schema.py` 用 `op.execute(schema.sql 整文件)`（单一真相源；不拆 alembic ops）
+- **D23 = (b)** 集成测 `@pytest.mark.integration` + `pyproject.toml [tool.pytest.ini_options].addopts -m "not integration"` 默认跳；CI / 手工 `pytest -m integration` 显式跑
+- **D24 = exit 1 + stderr**（`validate_consistency.py` 是脚本不是库；应用层需软调用走 `subprocess.run(...).returncode`）
+- **commit 节奏复用**：T-002 / T-003 验证过的 "ticket-only commit 单独提" 模式继续——T-004 草稿单独 push（[d3b402e](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/d3b402e)），实施期再切 feat / fix / progress 链
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| T-003 commit 3 在 pre-commit 阶段炸 2 次（ruff-format auto-modify + mypy 测试侧 5 错） | 一次性合修：(1) `.pre-commit-config.yaml` mypy `additional_dependencies` 加 `pytest>=8.0`；(2) test_models.py 用 `cast(Table, X.__table__)` 显式收窄（3 处）；(3) 删冗余 `# type: ignore[union-attr]`；合在 commit 3 内一并提，不再单独切 fix commit |
+| `git am` 在 Windows 端被 working tree 已有的 untracked 文件挡 | `git stash --include-untracked` 安全网 → `git am` 干净 → `git push` → push 验证后 `git stash drop`（避免数据损失） |
+| WSL local commit 与 origin（Windows `git am` 重生成）SHA 不同，但内容相同 | `git diff WSL_HEAD origin/main` 验空 → `git reset --hard origin/main` 收敛；4 commit 都验过 |
+
+### 遗留 / 下一步
+
+- **下一个 ticket = T-004 实施**（留下一会话）：
+  - `scripts/validate_consistency.py`（~200）正则解析 + ORM introspect + 比对
+  - `migrations/versions/0001_initial_schema.py`（~40）+ `migrations/env.py` 顺手把 `target_metadata = None` → `Base.metadata`
+  - `tests/integration/test_int_schema.py`（~80）testcontainers PG → upgrade → validate → W2/W14 反向
+  - `.pre-commit-config.yaml` 取消注释 validate-consistency local hook
+  - `pyproject.toml` `addopts` 加 `-m "not integration"`
+- **节奏（9 天到决赛 Day 14 → Day 23）**：T-004 1 天 → T-005 utils 层 2-3 天 → T-006 M1 切片 3-5 天 → benchmark 跑分余量
+- **T-003 ticket 状态行待补**：T-003 ticket 末尾尚未加"✅ 已完成 + commit 链"块（沿 T-001 / T-002 模式）；T-004 实施时一并补
+
+### LLM 调用
+
+本日累计 0 次生产调用。Claude Code 协作约 ~30 轮（T-003 4-commit push + 漂移修复 + 验收 + T-004 ticket 起草 + 本节追写）。
+
+---
+
 ## 2026-05-04 · Day 13 · T-003 业务对象 + 配置常量落地
 
 ### 改动
