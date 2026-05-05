@@ -39,12 +39,12 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
 
-  # ─── 本地 hook（待 T-003 启用） ───────────────────────
-  # - repo: local
-  #   hooks:
-  #     - id: validate-consistency
-  #       name: schema.sql ↔ models.py 漂移检查
-  #       entry: python scripts/validate_consistency.py
-  #       language: python
-  #       pass_filenames: false
-  #       always_run: true
+  # ─── 本地 hook：schema↔ORM 漂移检查（T-004 启用） ─────
+  - repo: local
+    hooks:
+      - id: validate-consistency
+        name: schema.sql ↔ memory_engine/models.py 漂移检查
+        entry: uv run python scripts/validate_consistency.py
+        language: system
+        pass_filenames: false
+        always_run: true

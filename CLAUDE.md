@@ -102,9 +102,9 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 **任何 Schema 改动**：
 1. 先改 [`docs/03-SCHEMA.md`](./docs/03-SCHEMA.md)（数据契约源头）
-2. 再改 `schema.sql`（T-002 创建后启用）
-3. 再改 `memory_engine/models.py`（T-002 创建后启用）
-4. 跑 `python scripts/validate_consistency.py`（T-003 实现后启用）
+2. 再改 `schema.sql`
+3. 再改 `memory_engine/models.py`
+4. 跑 `uv run python scripts/validate_consistency.py`（pre-commit 自动跑；exit 0 = 一致）
 5. 在 PR 中说明"我改了 X 字段，原因 Y"
 
 不允许只改一边。

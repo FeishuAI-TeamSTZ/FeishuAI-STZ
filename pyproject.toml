@@ -130,6 +130,8 @@ addopts = [
     "--strict-markers",
     "--strict-config",
     "-ra",
+    "-m",
+    "not integration",
 ]
 markers = [
     "live: 命中真实外部服务（默认跳过；CI 不跑）",

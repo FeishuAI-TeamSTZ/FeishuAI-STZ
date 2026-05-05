@@ -212,5 +212,8 @@ uv run pre-commit run --all-files
 
 ---
 
-> **状态**：📝 草稿（2026-05-04 创建）
-> **后续 ticket**：T-004（validate_consistency.py + alembic 包装 + 集成测）
+> **状态**：✅ **已完成**（2026-05-04）
+> **commit 链**：[26a71b6](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/26a71b6)（ticket 草稿）→ [eac5838](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/eac5838)（5 因子锁定 + .env 对齐）→ [36daf85](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/36daf85)（types.py + config.py + 4 单测）→ [3159f63](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/3159f63)（Day 13 PROGRESS）
+> **DoD 10/10 全 ✓**：6 文件 / 13 业务对象 / 13 常量 + Settings / mypy --strict / pre-commit / **pytest 73 passed in 0.99s** / W9 OKR 顶档自检 / 总日预算 ≤ 10K / Decision.from_orm round-trip / PROGRESS Day 13
+> **实际行数**：1147（types 361 + config 159 + 4 测试 627；超 ticket 估算 590 by 94%，主要因测试覆盖广 + ruff-format 后空行规范）
+> **后续 ticket**：T-004（validate_consistency.py + alembic 0001 + 集成测）

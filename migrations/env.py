@@ -30,10 +30,10 @@ if db_url:
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# T-002 完成后改为：
-#   from memory_engine.models import Base
-#   target_metadata = Base.metadata
-target_metadata = None
+# T-004：把 ORM metadata 注入 alembic（启用 autogenerate / compare_type）
+from memory_engine.models import Base  # noqa: E402
+
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:

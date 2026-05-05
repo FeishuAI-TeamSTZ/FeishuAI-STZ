@@ -675,6 +675,8 @@ migrations/versions/
 
 CI 必须挂此脚本；预期未来 `04-ENGUIDE.md §10` 给出 GitHub Actions 配置。
 
+**实现状态**：✅ T-004 启用（2026-05-05）—— `scripts/validate_consistency.py` 实现 + `.pre-commit-config.yaml` local hook 接入 + `tests/integration/test_int_schema.py` 集成测覆盖。规约 1-3 全覆盖（表名 / 字段名 / enum 取值 / 命名 CHECK / 命名索引 / FK 引用关系）；规约 4-5（详细类型 / DEFAULT / CHECK 表达式语义）按 T-004 D21 "80% 覆盖" 策略暂留 ORM `Mapped[Type]` 自检兜底，未来真触发漂移时再扩。
+
 ---
 
 ## 附录 B：命名约定
