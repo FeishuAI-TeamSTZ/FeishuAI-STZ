@@ -336,5 +336,8 @@ uv run pre-commit run --all-files
 
 ---
 
-> **状态**：📝 草稿（2026-05-05 创建，下一会话实施）
+> **状态**：✅ **已完成**（2026-05-06）
+> **commit 链**：[d3b402e](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/d3b402e)（ticket 草稿）→ [e0a9f93](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/e0a9f93)（5 文件实现 + pre-commit hook + 文档微订正）→ [77f7242](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/77f7242)（mypy 类型修 + SIM117 + engine.dispose）
+> **DoD 8/8 全 ✓**：validate_consistency.py exit 0 / alembic upgrade head 在 fresh PG 通 / pytest -q 73 unit passed / **pytest -m integration 5 passed in 5.48s**（含 testcontainers PG 启动）/ pre-commit 含 validate-consistency hook 全过 / mypy --strict 全过 / 故意漂移自检（fake_field → exit 1 + stderr / 还原 → exit 0）/ CLAUDE §2.4 + 03-SCHEMA 附录 A 同步
+> **实际行数**：~470（validate 250 + 0001 49 + test_int_schema 137 + .pre-commit +9 + pyproject +2，超 ticket 估算 320 by 47%，主要因集成测覆盖更广 + 文档微订正 inline + ruff-format 后空行规范）
 > **后续 ticket**：T-005（utils 层：LLM 网关 + 飞书网关 + 缓存 + 嵌入 + 不变量运行时）

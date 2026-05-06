@@ -6,6 +6,76 @@
 
 ---
 
+## 2026-05-06 · Day 15 · T-004 漂移检查 + Alembic + 集成测落地（Phase 0 4/5）
+
+### 改动
+
+- 新建 [scripts/validate_consistency.py](./scripts/validate_consistency.py)（~250 行）：正则解析 schema.sql + introspect Base.metadata → 6 维度 1:1 比对（表名 / 字段 / enum 取值 / 命名 CHECK 单向 / 命名索引带白名单 / FK 引用关系）；exit 0/1 + stderr 报告；可作 module 调用（`from scripts.validate_consistency import check`）
+- 新建 [migrations/versions/0001_initial_schema.py](./migrations/versions/0001_initial_schema.py)（49 行）：D22 `op.execute(schema.sql)` 整文件包装 + downgrade 反向 DROP（不动 EXTENSION vector）
+- 新建 [tests/integration/test_int_schema.py](./tests/integration/test_int_schema.py)（137 行）：testcontainers PG 16 + pgvector → alembic upgrade head → validate.check() + pgvector 扩展 + W2 正负 + W14 负 共 5 集成测；`@pytest.mark.integration` 默认跳；fixture 含 `engine.dispose()` teardown 释放连接池
+- 修订 `migrations/env.py`：`target_metadata = Base.metadata`（启用 alembic autogenerate）
+- 修订 `.pre-commit-config.yaml`：取消注释 validate-consistency local hook（`uv run python scripts/validate_consistency.py`）
+- 修订 `pyproject.toml [tool.pytest.ini_options].addopts`：加 `-m "not integration"`（开发期 default 跳集成测）
+- 文档同步：CLAUDE.md §2.4 移除 "T-XXX 启用" 时序标注；docs/03-SCHEMA.md 附录 A 加 "✅ T-004 启用" 状态行
+- T-003 ticket 状态行补完："📝 草稿" → "✅ 已完成 + commit 链 + DoD 10/10"
+- T-004 ticket 状态行：草稿 → 已完成 + commit 链 d3b402e → e0a9f93 → 77f7242
+
+### Commit 链（3 个）
+
+1. `d3b402e ticket: T-004 ...（草稿审定）` — Day 14 已 commit
+2. `e0a9f93 feat(T-004): validate_consistency.py + alembic 0001 + 集成测 + pre-commit hook` — 5 文件实现 + 4 文件修订
+3. `77f7242 fix(T-004): 类型修复 + SIM117 + engine.dispose` — 3 处 mypy + 2 处 SIM117 + fixture teardown 显式释放
+
+### DoD 8/8 验收
+
+| # | 项 | 结果 |
+|:---:|:---|:---|
+| 1 | `validate_consistency.py` 静态干跑 | ✅ exit 0（OK: schema.sql ↔ memory_engine/models.py 一致） |
+| 2 | `alembic upgrade head` 在 fresh PG | ✅ testcontainers PG 16 + pgvector 容器灌入零错误 |
+| 3 | `pytest -q`（unit 仍 73 passed） | ✅ 73 passed in <2s（不收集集成测） |
+| 4 | `pytest -m integration` | ✅ **5 passed in 5.48s** |
+| 5 | `pre-commit run --all-files` | ✅ ruff-format / ruff / mypy / yaml / toml / merge / large-file / line-ending / **validate-consistency** 全过 |
+| 6 | `mypy --strict` 在 scripts + tests/integration | ✅ Success: no issues found in 1 source file |
+| 7 | **故意漂移自检** | ✅ 注入 UserModel.fake_field → exit 1 + stderr "只在 ORM.users.fields: fake_field" / `git checkout` 还原 → exit 0 |
+| 8 | CLAUDE §2.4 + 03-SCHEMA 附录 A 更新 | ✅ 同步 inline |
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| **首次 validate 报 14 处假漂移**：(1) 多行 CHECK 内 `AND parent_id IS NOT NULL` 被当字段；(2) ORM 给匿名 SQL CHECK 起了名（chk_decisions_confidence 等 11 处）；(3) idx_decisions_fts / idx_emb_hnsw 在 ORM 不可表达 | 三层修复（按 T-004 §3 D21 "95% 覆盖 + 兜底"）：(1) FIELD_LINE regex 加 SQL_TYPE_KEYWORD 兜底（uuid/varchar/numeric 等）；(2) named_checks 改单向比对（schema → ORM 必须存在；ORM 可以多）；(3) SQL_ONLY_INDEX_ALLOWLIST = {idx_emb_hnsw, idx_decisions_fts} |
+| `uv sync --reinstall`（无 `--extra dev`）把 mypy/pytest 卸了 | `uv sync --extra dev` 重装；下次直接 `uv sync --extra dev` 不省 `--extra dev` |
+| `mypy --strict` 在 validate_consistency.py 报 3 处 | `dict[str, type[Enum]]` + `dict[str, dict[str, Any]]` + `dict[str, set[str]]` 补全泛型参数；新加 `from enum import Enum` |
+| `ruff` 报 SIM117（嵌套 with）2 处 | `pytest.raises(...)` + `pg_engine.begin() as conn` 合并到单 with 多 context（PEP 617 parenthesized 形式） |
+| 集成测全过但 session cleanup 抛 `PytestUnraisableExceptionWarning`（psycopg `__del__` ResourceWarning + `filterwarnings=error` 升级） | fixture teardown 加 `engine.dispose()` 显式释放连接池；不污染 pyproject filterwarnings 全局规则 |
+| 跨 Windows / WSL 文件 sync（每次 ruff/mypy 自动改) | 既有 `cp /mnt/e/...` 双向同步流程已稳定 |
+
+### 决策（本日新锁定 / 复用）
+
+- **D21 实施验证**（T-004 ticket 已锁）：正则 + ORM 兜底确实达 95% 覆盖；剩余 5%（多行 CHECK / 特殊索引）走 ALLOWLIST + 单向比对收口
+- **D22 验证通过**：alembic 0001 = `op.execute(schema.sql)` 在 testcontainers fresh PG 跑通，downgrade 反向 DROP 也写好
+- **D23 验证通过**：`pyproject addopts -m "not integration"` 默认跳；显式 `-m integration` 才跑（5.48s）
+- **D24 验证通过**：validate 是脚本不是库；exit 1 + stderr；同时 export `check()` 函数供 module import
+- **集成测 fixture 必须 engine.dispose()**：psycopg + create_engine + filterwarnings=error 三者交互需显式释放
+- **Phase 0 推进**：1→2→3→4 完成，剩 T-005（utils 层）即 Phase 0 收官
+
+### 遗留 / 下一步
+
+- **下一个 ticket = T-005**（utils 层；R1 内核领地）：
+  - `memory_engine/utils/llm_gateway.py` — Doubao 网关（heavy 2.0 / light 1.6 / embedding v1）+ TPM 计数器 + W12 降级 + trace_log 写入
+  - `memory_engine/utils/feishu_client.py` — 飞书 API 网关（W13 强制 trace_log INSERT）
+  - `memory_engine/utils/cache.py` — Hot Path 5min TTL 内存缓存（v1，cachetools）
+  - `memory_engine/utils/embeddings.py` — Doubao Embedding v1 包装（1024 维）
+  - `memory_engine/utils/invariants.py` — W2/W14/W15 运行时 assert
+- **节奏估算**（决赛 Day 23 = 5/14；今日 Day 15）：8 天到 deadline → T-005 utils 2 天 + T-006 M1 切片 4 天 + benchmark 跑分 + 答辩准备 2 天
+- **NPU-src 协作**：origin/test 分支仍未与 main 合流（其分支独立做 baseline RAG），用户需人工沟通
+
+### LLM 调用
+
+本日累计 0 次生产调用。Claude Code 协作约 ~30 轮（T-004 ticket 实施 + 14 处假漂移诊断与修复 + 集成测调试 + ResourceWarning 修 + 状态文档同步）。
+
+---
+
 ## 2026-05-05 · Day 14 · T-003 push 完成 + T-004 ticket 草稿审定
 
 ### 改动

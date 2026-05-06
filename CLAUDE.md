@@ -241,11 +241,11 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 ## 7. 当前阶段状态（Auto-Updated）
 
-当前周期：Phase 2 / Day 10（T-002 数据持久化层落地）
-七大机制实现进度：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层就位（schema.sql + ORM + 异常树）
+当前周期：Phase 2 / Day 15（T-004 漂移检查 + Alembic + 集成测落地）
+七大机制实现进度：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层 + 业务对象层 + 一致性层全就位
 三大主测试 fixture：TC001 / TC002 v0.1 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
 评测达标情况：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-代码骨架：✅ T-001（22 文件骨架）+ T-002（schema + ORM + 异常）；W2 / W14 CHECK 已在 DB 层验证；下一个 ticket = T-003（types.py + config.py + validate_consistency.py）
-最近修订：2026-05-01 T-002 完成（schema.sql 灌通 + ORM 8 表 + 异常树 25 类 + W2/W14 正负样本全过）
+代码骨架：✅ T-001（22 文件骨架）+ T-002（schema + ORM + 异常）+ T-003（types + config + 4 单测）+ T-004（validate + alembic 0001 + 5 集成测 + pre-commit hook）；W2/W14 在 DB 层验证（CHECK + 集成测）；下一个 ticket = T-005（utils 层：LLM 网关 + 飞书网关 + 缓存 + 嵌入）
+最近修订：2026-05-06 T-004 完成 8/8 DoD（validate exit 0 + alembic fresh PG 通 + 73 unit + 5 integration in 5.48s + pre-commit 含 hook 全过 + mypy strict + 故意漂移自检通）
 
 > 此节每天更新一次。Agent 启动时确认此节是最新状态。

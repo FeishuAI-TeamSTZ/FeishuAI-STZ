@@ -393,14 +393,15 @@
 
 > 本节是宪法中 **唯一允许频繁更新** 的部分（一日内最多 1 次，会话末尾 commit）。
 
-- **当前阶段**：Phase 2 / Day 10（T-002 数据持久化层落地，可启动业务对象层）
-- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层就位（schema.sql + ORM + 异常树）
+- **当前阶段**：Phase 2 / Day 15（T-004 漂移检查 + Alembic + 集成测落地，Phase 0 骨架阶段 4/5 完成）
+- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层 + 业务对象层 + 一致性层全就位
 - **三大主测试 fixture**：TC001 / TC002 v0 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
 - **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-- **代码骨架**：✅ T-001（22 文件 + 71 包 + Docker PG）+ T-002（schema.sql 290 行 + memory_engine/models.py 437 行 + memory_engine/exceptions.py 121 行）；**W2 / W14 CHECK 已在 DB 层验证（正负样本均通）**；下一个 ticket = T-003（types.py + config.py + validate_consistency.py）
+- **代码骨架**：✅ T-001（22 文件 + 71 包 + Docker PG）+ T-002（schema 290 + ORM 437 + 异常 121）+ T-003（types 361 + config 159 + 4 单测 627）+ T-004（validate 250 + alembic 0001 49 + 集成测 137 + pre-commit hook）；**W2/W14 在 DB 层 + 集成测双重验证**；下一个 ticket = T-005（utils 层）
+- **测试矩阵**：73 unit passed in <2s / 5 integration passed in 5.48s（testcontainers PG）/ pre-commit 含 validate-consistency local hook 全过
 - **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE / 06-benchmark-design 已建（v1.0+）；05 待建
 - **active 贡献者**：czhang076（架构 + 文档 + 工程）+ NPU-src（评测数据） + Claude Code 副驾
-- **最近修订**：2026-05-01 T-002 完成 8/8 DoD（schema 灌通 + ORM import + 异常 25 类 + W2/W14 正负样本全过 + mypy --strict + pre-commit 全过）
+- **最近修订**：2026-05-06 T-004 完成 8/8 DoD（validate exit 0 + alembic fresh PG 通 + 73 unit + 5 integration in 5.48s + pre-commit 含 hook 全过 + mypy strict + 故意漂移自检通）
 
 ---
 
