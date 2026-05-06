@@ -37,7 +37,12 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture(scope="module")
 def pg_engine() -> Iterator[Engine]:
-    """起 PG 容器 → alembic upgrade head → 返 engine（module 级复用）。"""
+    """起 PG 容器 → alembic upgrade head → 返 engine（module 级复用）。
+
+    fixture teardown 显式 `engine.dispose()` 释放连接池，避免 psycopg `__del__`
+    在 pytest session cleanup 时触发 ResourceWarning（被 pyproject filterwarnings
+    `error` 升级为 PytestUnraisableExceptionWarning 报错）。
+    """
     with PostgresContainer("pgvector/pgvector:pg16", driver="psycopg") as pg:
         url = pg.get_connection_url()
         env = {**os.environ, "DATABASE_URL": url}
@@ -50,7 +55,11 @@ def pg_engine() -> Iterator[Engine]:
             capture_output=True,
             text=True,
         )
-        yield create_engine(url)
+        engine = create_engine(url)
+        try:
+            yield engine
+        finally:
+            engine.dispose()
 
 
 # ============================================================
@@ -61,7 +70,7 @@ def pg_engine() -> Iterator[Engine]:
 def test_validate_consistency_zero_after_upgrade(pg_engine: Engine) -> None:
     """alembic upgrade 后 validate_consistency.check() 应返回空漂移列表。"""
     drifts = check()
-    assert drifts == [], f"schema.sql ↔ ORM 漂移:\n" + "\n".join(drifts)
+    assert drifts == [], "schema.sql ↔ ORM 漂移:\n" + "\n".join(drifts)
 
 
 def test_pgvector_extension_loaded(pg_engine: Engine) -> None:
@@ -77,19 +86,21 @@ def test_pgvector_extension_loaded(pg_engine: Engine) -> None:
 
 def test_w2_check_neg_supersedes_null_parent(pg_engine: Engine) -> None:
     """W2 CHECK 负样本：SUPERSEDES + parent_id NULL → IntegrityError。"""
-    with pytest.raises(IntegrityError, match="chk_decisions_evolution_parent"):
-        with pg_engine.begin() as conn:
-            conn.execute(
-                text("""
-                    INSERT INTO decisions (
-                        subject, predicate, object, logical_timestamp,
-                        provenance, confidence, evolution_type
-                    ) VALUES (
-                        '测试', 'TEST', 'value', now(),
-                        'USER_STATED', 0.9, 'SUPERSEDES'
-                    )
-                """)
-            )
+    with (
+        pytest.raises(IntegrityError, match="chk_decisions_evolution_parent"),
+        pg_engine.begin() as conn,
+    ):
+        conn.execute(
+            text("""
+                INSERT INTO decisions (
+                    subject, predicate, object, logical_timestamp,
+                    provenance, confidence, evolution_type
+                ) VALUES (
+                    '测试', 'TEST', 'value', now(),
+                    'USER_STATED', 0.9, 'SUPERSEDES'
+                )
+            """)
+        )
 
 
 def test_w2_check_pos_root_no_parent(pg_engine: Engine) -> None:
@@ -122,12 +133,14 @@ def test_w14_check_neg_count_exceeds_max(pg_engine: Engine) -> None:
             text("INSERT INTO users (user_id, name) VALUES (:u, :n)"),
             {"u": test_user, "n": "test"},
         )
-    with pytest.raises(IntegrityError, match="chk_card_quota_count"):
-        with pg_engine.begin() as conn:
-            conn.execute(
-                text("""
-                    INSERT INTO card_quota (user_id, quota_date, count, max_daily)
-                    VALUES (:u, '2026-04-29', 6, 5)
-                """),
-                {"u": test_user},
-            )
+    with (
+        pytest.raises(IntegrityError, match="chk_card_quota_count"),
+        pg_engine.begin() as conn,
+    ):
+        conn.execute(
+            text("""
+                INSERT INTO card_quota (user_id, quota_date, count, max_daily)
+                VALUES (:u, '2026-04-29', 6, 5)
+            """),
+            {"u": test_user},
+        )
