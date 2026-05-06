@@ -103,6 +103,10 @@ class W14Violation(InvariantViolation):
     """W14: 单用户每日卡片推送超过 max_daily。"""
 
 
+class W15Violation(InvariantViolation):
+    """W15: 非工作时段推送非紧急卡片（用户本地时区 work_hour 窗外）。"""
+
+
 # ---------------------------------------------------------------- Extraction
 class ExtractionError(MemoryEngineError):
     """决策原子提取阶段错误的基类。"""
