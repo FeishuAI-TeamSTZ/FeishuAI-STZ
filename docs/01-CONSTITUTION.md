@@ -392,15 +392,16 @@
 
 > 本节是宪法中 **唯一允许频繁更新** 的部分（一日内最多 1 次，会话末尾 commit）。
 
-- **当前阶段**：Phase 2 / Day 15（T-004 漂移检查 + Alembic + 集成测落地，Phase 0 骨架阶段 4/5 完成）
-- **七大机制实现进度**：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层 + 业务对象层 + 一致性层全就位
+- **当前阶段**：**Phase 0 全收官（5/5 ticket 完成）**——T-005 utils 层 mock-first 落地，业务模块（M1–M7）一切就绪
+- **七大机制实现进度**：M1–M7 = 未启动（接口契约 + 数据层 + 业务对象层 + 一致性层 + utils 层全就位）
 - **三大主测试 fixture**：TC001 / TC002 v0 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
-- **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-- **代码骨架**：✅ T-001（22 文件 + 71 包 + Docker PG）+ T-002（schema 290 + ORM 437 + 异常 121）+ T-003（types 361 + config 159 + 4 单测 627）+ T-004（validate 250 + alembic 0001 49 + 集成测 137 + pre-commit hook）；**W2/W14 在 DB 层 + 集成测双重验证**；下一个 ticket = T-005（utils 层）
-- **测试矩阵**：73 unit passed in <2s / 5 integration passed in 5.48s（testcontainers PG）/ pre-commit 含 validate-consistency local hook 全过
-- **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE / 06-benchmark-design 已建（v1.0+）；05 待建
+- **评测达标**：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分（M1–M7 业务实现 + Doubao 真接入是前置）
+- **代码骨架**：✅ T-001（22 文件 + 71 包 + Docker PG）+ T-002（schema 290 + ORM 437 + 异常 121）+ T-003（types 361 + config 159 + 4 单测 627）+ T-004（validate 250 + alembic 0001 49 + 集成测 137 + pre-commit hook）+ T-005（5 utils 模块 590 行 + 38 新单测；mock-first，USE_LLM_MOCK + USE_FEISHU_MOCK env 切换）
+- **测试矩阵**：**111 unit passed in 0.86s / 5 integration passed in 5.48s**（testcontainers PG）/ pre-commit 11/11 含 validate-consistency local hook 全过 / mypy --strict 业务代码 0 error
+- **不变量保障**：W2/W14 DB CHECK + 集成测；W12 LLM 额度 + W13 trace_id + W15 工作时间窗 = utils 层 runtime assert
+- **下游文档**：02-DESIGN / 03-SCHEMA / 04-ENGUIDE / 06-benchmark-design / whitepaper 已建；05 待建
 - **active 贡献者**：czhang076（架构 + 文档 + 工程）+ NPU-src（评测数据） + Claude Code 副驾
-- **最近修订**：2026-05-06 T-004 完成 8/8 DoD（validate exit 0 + alembic fresh PG 通 + 73 unit + 5 integration in 5.48s + pre-commit 含 hook 全过 + mypy strict + 故意漂移自检通）
+- **最近修订**：T-005 完成 8/8 DoD（5 utils 模块 mock-first + 38 新单测 + mypy strict + W12 quota 超额触发 + W13 trace_id 强制 + 端到端 cache_invalidate / cosine_similarity 等冒烟通过）
 
 ---
 

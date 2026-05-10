@@ -6,6 +6,85 @@
 
 ---
 
+## 2026-05-13 · T-005 utils 层 mock-first 全收官 + contest 框定 cleanup（Phase 0 5/5）
+
+### 改动
+
+#### T-005 utils 层（5 模块 + 38 新单测）
+
+- 新建 [memory_engine/utils/invariants.py](./memory_engine/utils/invariants.py)（~140 行）：W2/W14/W15 运行时 assert（DB CHECK 双保险）；纯函数实现，调用方负责 fetch 状态
+- 新建 [memory_engine/utils/cache.py](./memory_engine/utils/cache.py)（~85 行）：cachetools.TTLCache + RLock；cache_get / cache_set / cache_invalidate(glob) / cache_clear / cache_size
+- 新建 [memory_engine/utils/llm_gateway.py](./memory_engine/utils/llm_gateway.py)（~205 行）：Doubao 三档 mock-first；TPM token 计数器（线程安全）；W12 quota 超额 raise；USE_LLM_MOCK env 切换；deterministic JSON 模板（5 LLMCategory）
+- 新建 [memory_engine/utils/embeddings.py](./memory_engine/utils/embeddings.py)（~95 行）：1024 维 mock embedding（sha256 派生 + 单位归一化）；cosine_similarity；USE_LLM_MOCK 切换；lazy load Settings
+- 新建 [memory_engine/utils/feishu_client.py](./memory_engine/utils/feishu_client.py)（~165 行）：feishu_call 唯一入口；W13 强制 trace_id 生成；mock 模式按 endpoint 前缀返 fixture 模板；USE_FEISHU_MOCK 切换
+- 修订 [memory_engine/utils/__init__.py](./memory_engine/utils/__init__.py)：re-export light_llm_extract / heavy_llm_extract / compute_embedding / cosine_similarity
+- 修订 [memory_engine/exceptions.py](./memory_engine/exceptions.py)：新增 W15Violation 子类
+- 扩展 [tests/unit/test_utils.py](./tests/unit/test_utils.py)（+38 case）：TestCache(5) + TestW2(5) + TestW14(3) + TestW15(6) + TestEmbeddings(7) + TestLLMGatewayMock(7) + TestFeishuClientMock(5)
+
+#### Contest 框定 cleanup（17 文件）
+
+- 顶层框定（README / pyproject.toml description / 4 doc 头部 / whitepaper）：去 "飞书 AI 校园挑战赛 / 题二 / 方向 B / 17 天交付窗口 / 决赛日"
+- 散点术语（02-DESIGN / 06-benchmark / 01-CONSTITUTION）：replace_all "赛题→项目核心需求 / 评委→演示用户 / 赛事→项目 / 答辩→对外技术分享"
+- 时间约束（宪法 §4.2）：从 "5/14 决赛 + 17 天硬窗口" 改 "持续开发 + ticket 节奏 + v1.0/v1.1/v2.x 里程碑"
+- 归档：deliverables/final-submission.md → archive/contest-submission-2026-05.md（保留历史，不删除）
+- PROGRESS / CLAUDE §2.8 header 注释：去 "赛事开赛 / 决赛日"
+- 03-SCHEMA / 04-ENGUIDE / migrations 0001 doc：去 "17 天周期" 措辞
+- 历史不动（per CLAUDE §2.8）：PROGRESS Day 6-15 过往条目 + ticket retros + git log
+
+### Commit 链
+
+| commit | 内容 |
+|:---|:---|
+| f9842dd | docs(cleanup) Round 1：顶层框定 + 项目使命去 contest |
+| f672ce4 | docs(cleanup) Round 2：散点术语 + 时间窗口表达 |
+| 1d03b47 | feat(T-005 P0)：invariants + cache + 19 单测 |
+| c8b1e8e | feat(T-005 P1)：llm_gateway + embeddings + 14 单测 |
+| 573c925 | feat(T-005 P2)：feishu_client + 5 单测（W13 trace_id 强制） |
+
+### DoD 全过
+
+| # | 项 | 结果 |
+|:---:|:---|:---|
+| 1 | 5 utils 模块 import + re-export | ✅ 全部可 from memory_engine.utils import |
+| 2 | mypy --strict | ✅ Success: no issues found in N source files |
+| 3 | pre-commit run --all-files | ✅ 11/11 全过（含 validate-consistency） |
+| 4 | **pytest -q** | ✅ **111 passed in 0.86s**（73 → 111，+38 全过 / 5 deselected 集成测） |
+| 5 | mock 路径 deterministic | ✅ Embedding sha256 + LLM JSON 模板 + Feishu fixture 都可重复 |
+| 6 | W12 quota 超额触发 | ✅ DAILY_LLM_BUDGET[DECAY_OFFLINE] 反复调用 → LLMQuotaExceededError |
+| 7 | W13 trace_id 强制 | ✅ 10 次 feishu_call 生成 10 个唯一 trc_<16hex> |
+| 8 | W2/W14/W15 runtime assert | ✅ 与 DB CHECK 双保险，集成测验证 |
+
+### 决策（本日新锁定）
+
+- **D25 USE_LLM_MOCK + USE_FEISHU_MOCK env 开关**：dev 默认 mock，prod 显式 "0" 走真路径；解决"演示稳定 + 单测无网络依赖"
+- **D26 mock embedding = sha256 派生 1024 维 + 单位归一化**：deterministic 可重复 + cosine 直接 = 内积
+- **D27 feishu_client mock 按 endpoint 前缀匹配模板**：tenant_token / im messages / contact users 三类常见 endpoint 有专门模板
+- **W13 在 utils 层只生成 trace_id + structlog**：DB INSERT 留 T-006 业务层注入 session 时统一接入；与 DB NOT NULL PK CHECK 互补
+- **lazy load Settings**：mock 路径不触发 Settings ValidationError（避免 dev 必填 5 个 env）
+
+### 卡壳与破局
+
+| 问题 | 破局 |
+|:---|:---|
+| `from memory_engine.config import settings` 报 module 无 settings 属性 | config 暴露 `Settings` class 与 `get_settings()` factory 而非 module 单例；改 lazy load `settings = get_settings()` 在真路径函数内 |
+| pyproject filterwarnings=error 导致 mock 测试也炸（structlog 警告等） | 现有 conftest fixture 已处理；`@pytest.fixture(autouse=True)` 强制 USE_LLM_MOCK / USE_FEISHU_MOCK |
+| ruff PEP585 警告 `dict.fromkeys` 与 hint 冲突 | `dict.fromkeys(LLMCategory, 0)` ruff 接受；mypy 也 OK |
+
+### 遗留 / 下一步
+
+- **T-006**（M1 切片）：webhook → cold_path → extractor → evolution_judge → commit_evolution → cards → DB 落库
+  - 业务模块对接：用 utils mock 路径开发，单测全 mock；集成测可选启 USE_LLM_MOCK=0 跑真 Doubao
+  - 估算：5-7 天（M1 + M2 + 部分 M5/M6）；M3/M4/M7 可在 T-007 / T-008 续写
+- **trace_log DB INSERT**（W13 真路径）：T-006 业务 cold_path 注入 DB session 时统一接入
+- **真 Doubao 接入测试**：T-006 期或 v1.1；当前 mock 路径足够开发
+- **05-edge-discipline.md**：跨源 OKR / 审批 / 妙记 / 日历真接入触发后再写（宪法 §3.3 已写明）
+
+### LLM 调用
+
+本日累计 0 次生产调用（全部为 mock 模式）。Claude Code 协作 ~25 轮。
+
+---
+
 ## 2026-05-06 · Day 15 · T-004 漂移检查 + Alembic + 集成测落地（Phase 0 4/5）
 
 ### 改动

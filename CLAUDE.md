@@ -241,11 +241,11 @@ ticket 范围严格按 DESIGN.md v3.3 七大机制 + 三大主测试：
 
 ## 7. 当前阶段状态（Auto-Updated）
 
-当前周期：Phase 2 / Day 15（T-004 漂移检查 + Alembic + 集成测落地）
-七大机制实现进度：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据层 + 业务对象层 + 一致性层全就位
+当前周期：Phase 0 / 5 ticket 全收官（T-005 utils 层 mock-first 完成）
+七大机制实现进度：M1–M7 = 未启动；接口契约就位（04-ENGUIDE §8）；数据 / 业务对象 / 一致性 / utils 全层就位（mock-first）
 三大主测试 fixture：TC001 / TC002 v0.1 已建（NPU-src 贡献，benchmark/fixtures/）；TC003-TC009 待建
-评测达标情况：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分
-代码骨架：✅ T-001（22 文件骨架）+ T-002（schema + ORM + 异常）+ T-003（types + config + 4 单测）+ T-004（validate + alembic 0001 + 5 集成测 + pre-commit hook）；W2/W14 在 DB 层验证（CHECK + 集成测）；下一个 ticket = T-005（utils 层：LLM 网关 + 飞书网关 + 缓存 + 嵌入）
-最近修订：2026-05-06 T-004 完成 8/8 DoD（validate exit 0 + alembic fresh PG 通 + 73 unit + 5 integration in 5.48s + pre-commit 含 hook 全过 + mypy strict + 故意漂移自检通）
+评测达标情况：Recall_robust / Acc_supersede / E_align / E_step / S1–S6 = 未跑分（M1–M7 业务实现是前置）
+代码骨架：✅ T-001（22 文件骨架）+ T-002（schema + ORM + 异常）+ T-003（types + config + 4 单测）+ T-004（validate + alembic 0001 + 5 集成测 + pre-commit hook）+ T-005（5 utils 模块 mock-first + 38 单测）；**单测 111 passed / 集成测 5 passed / pre-commit 11/11 / mypy --strict 全过**；下一个 ticket = T-006（M1 端到端切片：webhook → cold_path → extractor → evolution_judge → cards → DB 落库）
+最近修订：T-005 完成（5 utils 模块 + 38 新单测；W12/W13/W14/W15 应用层 + mock-first；现成代码可解锁 T-006 业务实施）
 
 > 此节每天更新一次。Agent 启动时确认此节是最新状态。

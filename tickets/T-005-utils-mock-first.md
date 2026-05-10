@@ -223,5 +223,8 @@ uv run pytest -m integration
 
 ---
 
-> **状态**：📝 草稿（2026-05-13 创建，time-constrained 模式 6-8h 实施）
-> **后续 ticket**：T-006 M1 切片（端到端 webhook → cold_path → DB 落库）；以及 v1.1 真接入路径（Doubao + 飞书）
+> **状态**：✅ **已完成**（2026-05-13 起草 + 实施 + 收尾）
+> **commit 链**：[0629a40](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/0629a40)（ticket 草稿）→ [1d03b47](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/1d03b47)（P0 invariants + cache + 19 单测）→ [c8b1e8e](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/c8b1e8e)（P1 llm_gateway + embeddings + 14 单测）→ [573c925](https://github.com/FeishuAI-TeamSTZ/FeishuAI-STZ/commit/573c925)（P2 feishu_client + 5 单测）
+> **DoD 全 ✓**：5 utils 模块（invariants / cache / llm_gateway / embeddings / feishu_client）/ mypy --strict 全过 / pre-commit 11/11 全过 / **pytest 73 → 111 passed in 0.86s（+38 新单测）**/ mock 模式 deterministic / W12 quota 超额触发 / W13 trace_id 强制生成 / W14 W15 运行时 assert 与 DB CHECK 双保险
+> **实际行数**：~590（embeddings 95 + llm_gateway 205 + feishu_client 165 + invariants 140 + cache 85；超 ticket 估算 510 by 16%，主要因 docstring + 类型注解充分）
+> **后续 ticket**：T-006 M1 切片（端到端 webhook → cold_path → extractor → evolution_judge → cards → decay → DB 落库）；v1.1 真接入路径（Doubao 真 EP + 飞书 webhook + trace_log DB INSERT 接入）
