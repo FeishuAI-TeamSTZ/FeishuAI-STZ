@@ -1,7 +1,7 @@
 [project]
 name = "feishu-memory-engine"
 version = "0.1.0"
-description = "飞书决策一致性引擎 — 企业级决策原子 + 演化谱系记忆系统（飞书 AI 校园挑战赛 题二 方向 B）"
+description = "飞书决策一致性引擎 — 企业级决策原子 + 演化谱系记忆系统"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = { text = "MIT" }

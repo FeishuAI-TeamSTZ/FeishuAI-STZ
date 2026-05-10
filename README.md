@@ -1,7 +1,7 @@
 # FeishuAI-STZ · 飞书决策一致性引擎
 
-> 飞书 AI 校园挑战赛 · 题二（企业级记忆引擎）· **方向 B**：项目决策与上下文记忆
-> Team STZ · 17 天交付窗口（2026-04-22 → 2026-05-14）
+> 企业级长程协作记忆系统 · 飞书生态决策一致性中枢
+> Team STZ
 
 把企业级记忆**窄定义**为 **"带演化谱系、跨源共识度、五维时效衰减的决策原子集合"**，在飞书消息 / 文档 / OKR / 审批 / 妙记 / 日历 + CLI 之间做**一致性中枢**。
 
@@ -28,8 +28,7 @@
 
 ## 📦 提交答卷与文档
 
-### 评委必看
-- 🎯 **[终极交付答卷](./deliverables/final-submission.md)** — 飞书表单填写底稿（Demo 脚本 + 核心代码 + 项目亮点 + AI 亮点）
+### 项目展示
 - 📄 **[白皮书 v0.1](./docs/whitepaper.md)** — 5000 字框架（8 章 + 5 附录）
 - 📊 **[评测设计](./docs/06-benchmark-design.md)** — TC001–TC009 测试矩阵 + 评分规则
 
@@ -81,7 +80,7 @@ uv run pytest -m integration                     # 期望：5 passed in ~6s
 uv run python -m benchmark.validate_fixtures
 ```
 
-### 演示亮点命令（评委友好）
+### 演示亮点命令
 
 ```bash
 # DEMO 1: W2 不变量在 DB 层强制（应用 bug 也无法绕过）
