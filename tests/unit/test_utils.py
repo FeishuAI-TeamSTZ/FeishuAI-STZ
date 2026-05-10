@@ -356,3 +356,59 @@ class TestLLMGatewayMock:
 
         with pytest.raises(ValueError, match="prompt 不能为空"):
             heavy_llm_extract("", category=LLMCategory.EVOLVE_HEAVY)
+
+
+# ============================================================
+# Feishu Client（5 case，mock-first；W13 trace_id 必生成）
+# ============================================================
+
+
+@pytest.fixture(autouse=True)
+def _ensure_feishu_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """所有 feishu 单测强制 mock 模式（避免误调真飞书 API）。"""
+    monkeypatch.setenv("USE_FEISHU_MOCK", "1")
+
+
+class TestFeishuClientMock:
+    """memory_engine.utils.feishu_client — W13 强制 trace_id + mock 响应。"""
+
+    def test_mock_returns_code_0(self) -> None:
+        from memory_engine.utils.feishu_client import feishu_call
+
+        r = feishu_call("/open-apis/im/v1/messages", "POST", {"text": "hi"})
+        assert r.code == 0
+        assert r.msg == "ok"
+        assert r.trace_id.startswith("trc_")
+
+    def test_trace_id_unique_per_call(self) -> None:
+        """W13: 每次调用生成新 trace_id（mock 模式也强制）。"""
+        from memory_engine.utils.feishu_client import feishu_call
+
+        ids = {feishu_call("/open-apis/im/v1/messages").trace_id for _ in range(10)}
+        assert len(ids) == 10  # 全部唯一
+
+    def test_endpoint_template_match(self) -> None:
+        """endpoint 前缀匹配不同 mock 模板。"""
+        from memory_engine.utils.feishu_client import feishu_call
+
+        token = feishu_call("/open-apis/auth/v3/tenant_access_token/internal", "POST")
+        msg = feishu_call("/open-apis/im/v1/messages", "POST")
+        # token endpoint 模板含 tenant_access_token 字段；message endpoint 模板含 message_id
+        # 不同 endpoint 的 mock 应有可区分内容
+        assert token.code == 0
+        assert msg.code == 0
+        assert token.data != msg.data
+
+    def test_unknown_endpoint_returns_default_mock(self) -> None:
+        from memory_engine.utils.feishu_client import feishu_call
+
+        r = feishu_call("/open-apis/totally/unknown/endpoint", "GET")
+        assert r.code == 0
+        assert r.msg == "ok"
+        assert r.data == {}
+
+    def test_empty_endpoint_raises(self) -> None:
+        from memory_engine.utils.feishu_client import feishu_call
+
+        with pytest.raises(ValueError, match="endpoint 不能为空"):
+            feishu_call("", "POST")
