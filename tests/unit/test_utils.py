@@ -1,22 +1,31 @@
-"""T-005 P0 单测：cache + invariants（W2 / W14 / W15）。
+"""T-005 P0+P1 单测：cache + invariants + embeddings + llm_gateway。
 
 覆盖：
 - Cache：miss / set+get / TTL 默认值 / glob invalidate / clear / size
 - W2：SUPERSEDES 父必须 ARCHIVED；REFINES 父必须保 ACTIVE；ROOT 跳过
 - W14：current_count < max → OK；>= max → W14Violation
 - W15：本地工时内 OK；时区外 → W15Violation
+- Embeddings：1024 维 / deterministic / 单位向量 / cosine self=1
+- LLM gateway：mock 模式 deterministic / TPM 计数 / 超额 W12 / category 模板
 - 异常携带 trace_id + extra（structlog 关联用）
 """
 
 from __future__ import annotations
 
+import json
+import os
 from datetime import datetime, timezone
 from typing import Any
 
 import pytest
 
-from memory_engine.exceptions import W2Violation, W14Violation, W15Violation
-from memory_engine.types import DecisionState, EvolutionType
+from memory_engine.exceptions import (
+    LLMQuotaExceededError,
+    W2Violation,
+    W14Violation,
+    W15Violation,
+)
+from memory_engine.types import DecisionState, EvolutionType, LLMCategory
 from memory_engine.utils.cache import (
     cache_clear,
     cache_get,
@@ -194,3 +203,156 @@ class TestW15:
         now_utc = datetime(2026, 5, 13, 11, 0, tzinfo=timezone.utc)  # 19:00 上海
         with pytest.raises(W15Violation):
             assert_w15(now_utc, work_hour_start=9, work_hour_end=19)
+
+
+# ============================================================
+# Embeddings（6 case）
+# ============================================================
+
+
+class TestEmbeddings:
+    """memory_engine.utils.embeddings — Doubao Embedding 1024 维 + cosine."""
+
+    def test_dim_1024(self) -> None:
+        from memory_engine.utils.embeddings import EMBEDDING_DIM, compute_embedding
+
+        v = compute_embedding("hello")
+        assert len(v) == EMBEDDING_DIM == 1024
+
+    def test_deterministic(self) -> None:
+        from memory_engine.utils.embeddings import compute_embedding
+
+        v1 = compute_embedding("hello world")
+        v2 = compute_embedding("hello world")
+        assert v1 == v2
+
+    def test_different_text_diff_vector(self) -> None:
+        from memory_engine.utils.embeddings import compute_embedding
+
+        v1 = compute_embedding("hello")
+        v2 = compute_embedding("world")
+        assert v1 != v2
+
+    def test_unit_vector(self) -> None:
+        """mock embedding 应为单位向量（mock 内部归一化）。"""
+        from memory_engine.utils.embeddings import compute_embedding, cosine_similarity
+
+        v = compute_embedding("test sentence for unit norm")
+        # 单位向量：自己与自己的 cosine = 1
+        assert cosine_similarity(v, v) == pytest.approx(1.0, abs=1e-6)
+
+    def test_cosine_similarity_dim_mismatch(self) -> None:
+        from memory_engine.utils.embeddings import cosine_similarity
+
+        with pytest.raises(ValueError, match="维度不一致"):
+            cosine_similarity([1.0, 2.0], [1.0, 2.0, 3.0])
+
+    def test_cosine_similarity_zero_vector(self) -> None:
+        from memory_engine.utils.embeddings import cosine_similarity
+
+        zero = [0.0] * 1024
+        v = [1.0 / (1024**0.5)] * 1024  # 单位向量
+        assert cosine_similarity(zero, v) == 0.0
+
+    def test_empty_text_raises(self) -> None:
+        from memory_engine.utils.embeddings import compute_embedding
+
+        with pytest.raises(ValueError, match="text 不能为空"):
+            compute_embedding("")
+
+
+# ============================================================
+# LLM Gateway（7 case）
+# ============================================================
+
+
+@pytest.fixture(autouse=True)
+def _ensure_mock_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    """所有 LLM 单测强制 mock 模式（避免误调真 API）。"""
+    monkeypatch.setenv("USE_LLM_MOCK", "1")
+    # 重置 quota 计数器（模块级状态）
+    from memory_engine.utils.llm_gateway import _reset_quota
+
+    _reset_quota()
+
+
+class TestLLMGatewayMock:
+    """mock-first LLM gateway 行为契约。"""
+
+    def test_light_extract_returns_deterministic_json(self) -> None:
+        from memory_engine.utils.llm_gateway import light_llm_extract
+
+        r1 = light_llm_extract("test prompt", category=LLMCategory.EXTRACT_LIGHT)
+        r2 = light_llm_extract("test prompt", category=LLMCategory.EXTRACT_LIGHT)
+        assert r1.content == r2.content
+        assert not r1.used_local
+        # mock content 是合法 JSON
+        parsed: dict[str, Any] = json.loads(r1.content)
+        assert "subject" in parsed
+        assert parsed["confidence"] > 0
+
+    def test_heavy_extract_evolution_json(self) -> None:
+        from memory_engine.utils.llm_gateway import heavy_llm_extract
+
+        r = heavy_llm_extract("evolve this", category=LLMCategory.EVOLVE_HEAVY)
+        parsed: dict[str, Any] = json.loads(r.content)
+        assert parsed["evolution_type"] in {
+            "ROOT",
+            "SUPERSEDES",
+            "REFINES",
+            "GENERALIZES",
+            "BRANCHES",
+        }
+        assert 0 <= parsed["confidence"] <= 1
+
+    def test_reflect_border_quality_score(self) -> None:
+        from memory_engine.utils.llm_gateway import heavy_llm_extract
+
+        r = heavy_llm_extract("reflect this", category=LLMCategory.REFLECT_BORDER)
+        parsed: dict[str, Any] = json.loads(r.content)
+        assert "quality_score" in parsed
+        assert 0 <= parsed["quality_score"] <= 1
+
+    def test_trace_id_stable_in_mock(self) -> None:
+        """mock 模式下 (prompt, category) 决定 trace_id（便于单测断言）。"""
+        from memory_engine.utils.llm_gateway import light_llm_extract
+
+        r1 = light_llm_extract("same prompt", category=LLMCategory.EXTRACT_LIGHT)
+        r2 = light_llm_extract("same prompt", category=LLMCategory.EXTRACT_LIGHT)
+        assert r1.trace_id == r2.trace_id
+        assert r1.trace_id.startswith("trc_")
+
+    def test_tokens_used_tracked(self) -> None:
+        """tokens_used > 0 + quota 计数器对应 category 同步增长。"""
+        from memory_engine.utils.llm_gateway import (
+            _get_quota_used,
+            light_llm_extract,
+        )
+
+        before = _get_quota_used(LLMCategory.EXTRACT_LIGHT)
+        r = light_llm_extract("count me", category=LLMCategory.EXTRACT_LIGHT)
+        after = _get_quota_used(LLMCategory.EXTRACT_LIGHT)
+        assert r.tokens_used > 0
+        assert after - before == r.tokens_used
+
+    def test_quota_exceeded_raises_w12(self) -> None:
+        """连续调用直至超过 DAILY_LLM_BUDGET[category] → LLMQuotaExceededError。"""
+        from memory_engine.config import DAILY_LLM_BUDGET
+        from memory_engine.utils.llm_gateway import (
+            _get_quota_used,
+            light_llm_extract,
+        )
+
+        budget = DAILY_LLM_BUDGET[LLMCategory.DECAY_OFFLINE]  # 最小预算 0.5K
+        # 反复调用直到超额（每次约 80 tokens）
+        with pytest.raises(LLMQuotaExceededError) as exc_info:
+            for i in range(budget // 50 + 5):
+                light_llm_extract(f"prompt-{i}", category=LLMCategory.DECAY_OFFLINE)
+        assert exc_info.value.extra["category"] == "decay_offline"
+        assert _get_quota_used(LLMCategory.DECAY_OFFLINE) > 0
+
+    def test_empty_prompt_raises(self) -> None:
+        from memory_engine.utils.llm_gateway import heavy_llm_extract
+
+        with pytest.raises(ValueError, match="prompt 不能为空"):
+            heavy_llm_extract("", category=LLMCategory.EVOLVE_HEAVY)
