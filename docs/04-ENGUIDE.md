@@ -877,7 +877,7 @@ cold_path.process_event(event)
      └──► decay.recompute_uncertainty       (M7, 异步触发)
 ```
 
-**v2 演进**（不在 17 天范围）：引入事件总线（Redis Streams 或 Postgres LISTEN/NOTIFY）；事件清单：
+**v2 演进**（v1 不做）：引入事件总线（Redis Streams 或 Postgres LISTEN/NOTIFY）；事件清单：
 
 | 事件 | 发布方 | 订阅方 |
 |:---|:---|:---|

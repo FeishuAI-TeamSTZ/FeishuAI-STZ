@@ -5,7 +5,7 @@ Revises:
 Create Date: 2026-05-05
 
 T-004 D22：alembic 0001 = `op.execute(schema.sql)` 整文件包装；schema.sql 是单一真相源
-（CLAUDE.md §2.4），17 天周期内不会有破坏性 schema 改动；alembic 真正派上用场是 v2 字段演进。
+（CLAUDE.md §2.4），v1 周期内不会有破坏性 schema 改动；alembic 真正派上用场是 v2 字段演进。
 """
 
 from __future__ import annotations
